@@ -224,7 +224,7 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .lv-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .lv-rays{position:absolute;left:50%;top:40%;width:900px;height:900px;margin:-450px 0 0 -450px;background:repeating-conic-gradient(from 0deg,rgba(206,223,217,.10) 0deg 6deg,transparent 6deg 18deg);border-radius:50%;-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:lvSpin 18s linear infinite,lvFade 1s ease both;pointer-events:none}
 .lv-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:#f4f2e6;max-width:420px}
-.lv-badge{position:relative;animation:lvPop .9s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 0 26px rgba(78,129,151,.85)) drop-shadow(0 0 60px rgba(206,223,217,.25))}
+.lv-badge{position:relative;animation:lvPop .9s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 0 22px var(--beam)) drop-shadow(0 0 60px color-mix(in srgb,var(--beam) 40%,transparent))}
 .lvlup.rank .lv-badge{animation:lvFlip 1.3s cubic-bezier(.2,1.2,.35,1) both}
 .lv-badge svg{display:block}
 .lv-shine{position:absolute;inset:0;overflow:hidden;border-radius:12px;pointer-events:none}
@@ -232,13 +232,31 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .lv-kicker{color:#cedfd9!important;letter-spacing:.32em!important;animation:lvUp .5s .35s both}
 .lv-num{display:flex;align-items:baseline;gap:12px;font-family:var(--display);font-weight:800;animation:lvUp .5s .45s both}
 .lv-num span{font-size:18px;letter-spacing:.14em;color:#8f8a7c}
-.lv-num b{font-size:100px;line-height:.9;letter-spacing:-.05em;color:#f4f2e6;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(78,129,151,.75)}
+.lv-num b{font-size:88px;line-height:.9;letter-spacing:-.05em;color:#f4f2e6;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(78,129,151,.75)}
 .lv-num b.bump{animation:lvBump .35s ease}
 .lv-rank{font-family:var(--display);font-style:italic;font-weight:800;font-size:clamp(28px,9vw,42px);letter-spacing:-.01em;color:#cedfd9;text-shadow:0 0 30px rgba(78,129,151,.8);animation:lvSlam .65s 1s cubic-bezier(.2,1.5,.4,1) both}
 .lv-sub{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#cedfd9;animation:lvUp .5s .6s both}
 .lv-reward{border:1px solid rgba(206,223,217,.45);padding:9px 14px;border-radius:2px;color:#f4f2e6;font-size:14px;animation:lvUp .5s 1.3s both;background:rgba(78,129,151,.18)}
 .lv-ok{margin-top:10px;animation:lvUp .5s 1.4s both}
 .lv-tap{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8f8a7c;animation:lvUp .5s 1.8s both}
+.lv-pillar{position:absolute;left:50%;bottom:0;width:280px;height:100%;margin-left:-140px;background:linear-gradient(to top,color-mix(in srgb,var(--beam) 75%,transparent),color-mix(in srgb,var(--beam) 22%,transparent) 55%,transparent 92%);filter:blur(20px);transform-origin:bottom;animation:lvPillar 1s cubic-bezier(.2,.9,.3,1) both,lvFlicker 2.2s 1s ease-in-out infinite;pointer-events:none}
+.lv-pillar::after{content:"";position:absolute;left:50%;top:8%;bottom:0;width:46px;margin-left:-23px;background:linear-gradient(to top,#fff,color-mix(in srgb,var(--beam) 70%,transparent) 55%,transparent);filter:blur(7px);opacity:.85}
+.lv-rune{position:absolute;left:50%;top:40%;width:360px;height:360px;margin:-180px 0 0 -180px;opacity:.6;animation:lvFade .8s .25s both;pointer-events:none;color:var(--beam)}
+.lv-rune svg{width:100%;height:100%;animation:lvSpin 26s linear infinite}
+.lv-rune.r2{width:250px;height:250px;margin:-125px 0 0 -125px;opacity:.45}
+.lv-rune.r2 svg{animation-direction:reverse;animation-duration:16s}
+.lv-banner{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:800;font-style:italic;font-size:clamp(28px,9vw,44px);letter-spacing:.02em;color:#fff;text-shadow:0 0 14px var(--beam),0 0 38px var(--beam),0 2px 0 rgba(0,0,0,.6);animation:lvSlam .6s .55s cubic-bezier(.2,1.5,.4,1) both;white-space:nowrap}
+.lv-wing{width:clamp(28px,10vw,60px);height:2px;background:linear-gradient(90deg,transparent,var(--beam));position:relative;flex:none}
+.lv-wing::after{content:"";position:absolute;right:-5px;top:-4px;width:10px;height:10px;background:var(--beam);transform:rotate(45deg);box-shadow:0 0 10px var(--beam)}
+.lv-wing.r{transform:scaleX(-1)}
+.lv-stats{list-style:none;margin:6px 0 0;padding:12px 18px;display:flex;flex-direction:column;gap:7px;border:1px solid color-mix(in srgb,var(--beam) 60%,transparent);outline:1px solid rgba(0,0,0,.6);outline-offset:-4px;background:linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,.35));border-radius:3px;min-width:min(280px,82vw);box-shadow:inset 0 0 22px rgba(0,0,0,.7),0 0 24px color-mix(in srgb,var(--beam) 30%,transparent);animation:lvUp .45s 1s both}
+.lv-stats li{font-size:14px;color:#cfcab9;display:flex;justify-content:space-between;gap:16px;animation:lvUp .35s both}
+.lv-stats b{color:#fff;font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums}
+.lv-stats li.gain b{color:#9fe0b8;text-shadow:0 0 10px rgba(159,224,184,.5)}
+.lv-stats li.loot b{color:var(--beam);text-shadow:0 0 10px var(--beam)}
+@media (max-height:740px){.lv-num b{font-size:60px}.lv-badge svg{width:104px!important;height:104px!important}.lv-in{gap:6px}.lv-stats{padding:9px 14px;gap:4px}}
+@keyframes lvPillar{from{transform:scaleY(0);opacity:0}}
+@keyframes lvFlicker{50%{opacity:.72}}
 @keyframes lvFade{from{opacity:0}}
 @keyframes lvOut{to{opacity:0;transform:scale(1.04)}}
 @keyframes lvSpin{to{transform:rotate(360deg)}}
@@ -517,7 +535,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -1283,29 +1301,45 @@ function burst(cv,ti,big,delay=0){
       ctx.restore();}
     if(alive&&el<4)requestAnimationFrame(f);})(performance.now());
 }
+function rise(cv,col){const ctx=cv.getContext("2d");if(!ctx)return;const dpr=Math.min(2,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ps=[],t0=performance.now();
+  (function f(t){if(!cv.isConnected)return;const el=(t-t0)/1000;ctx.clearRect(0,0,W,H);
+    if(el<4)for(let k=0;k<3;k++)ps.push({x:W/2+(Math.random()-.5)*220,y:H+10,vy:-(1.5+Math.random()*3.5),vx:(Math.random()-.5)*.4,r:.8+Math.random()*2.2,life:1,c:Math.random()<.5?"#ffffff":col});
+    for(const p of ps){if(p.life<=0)continue;p.x+=p.vx;p.y+=p.vy;p.life-=.008;ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.c;ctx.shadowColor=col;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;ctx.shadowBlur=0;if(el<6.5)requestAnimationFrame(f);})(t0);}
+function runeSVG(n){const ticks=[...Array(n)].map((_,i)=>{const a=i/n*Math.PI*2,x1=50+Math.cos(a)*44,y1=50+Math.sin(a)*44,x2=50+Math.cos(a)*(i%4?41:37),y2=50+Math.sin(a)*(i%4?41:37);return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;}).join("");
+  const gems=[0,1,2,3,4,5].map(i=>{const a=i/6*Math.PI*2-Math.PI/2,x=50+Math.cos(a)*47,y=50+Math.sin(a)*47;return `<path d="M${x} ${y-2.2} L${x+2.2} ${y} L${x} ${y+2.2} L${x-2.2} ${y}Z" fill="currentColor"/>`;}).join("");
+  return `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width=".5"><circle cx="50" cy="50" r="47"/><circle cx="50" cy="50" r="44" stroke-dasharray="1 2"/><circle cx="50" cy="50" r="35" opacity=".6"/>${ticks}${gems}<path d="M50 6 L88 72 L12 72Z" opacity=".35"/><path d="M50 94 L12 28 L88 28Z" opacity=".35"/></svg>`;}
 function celebrate(from,to,forceRank){
   const old=document.querySelector(".lvlup");if(old)old.remove();
   const ti0=tierIdx(from),ti1=tierIdx(to),rankUp=forceRank===true?true:forceRank===false?false:ti1>ti0,reward=REWARDS.find(r=>r.lv&&r.lv>from&&r.lv<=to);
-  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const o=document.createElement("div");o.className="lvlup"+(rankUp?" rank":"");o.setAttribute("role","dialog");o.setAttribute("aria-label",`Level ${to}`);
-  o.innerHTML=`${rankUp?'<div class="lv-rays"></div><canvas class="lv-fx lv-fx2"></canvas>':""}<canvas class="lv-fx lv-fx1"></canvas><div class="lv-in">
-    <div class="lv-badge">${badge(ti1,rankUp?176:132)}<span class="lv-shine"></span></div>
-    <span class="label lv-kicker">${rankUp?"New rank":"Level up"}</span>
-    <div class="lv-num"><span>LEVEL</span><b id="lv-count">${reduce?to:from}</b></div>
-    ${rankUp?`<div class="lv-rank">${esc(TIERS[ti1][0].toUpperCase())}</div>`:`<div class="lv-sub">${esc(TIERS[ti1][0])}</div>`}
-    ${reward?`<p class="lv-reward">Reward unlocked: ${esc(reward.t)}</p>`:""}
-    <button class="btn lv-ok" id="lv-ok">${rankUp?"Claim your rank":"Keep going"}</button><span class="lv-tap">Tap anywhere to close</span></div>`;
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,beam=METALS[ti1][1];
+  const nextIn=Math.max(0,xpFor(to+1)-Math.max(totalXP(),xpFor(to)));
+  const rows=[`<li class="gain"><span>Level</span><b>${from} → ${to}</b></li>`,`<li class="gain"><span>All stats</span><b>+1</b></li>`,`<li><span>Next level in</span><b>${nextIn.toLocaleString()} XP</b></li>`];
+  if(rankUp)rows.push(`<li class="loot"><span>Title unlocked</span><b>${esc(TIERS[ti1][0])}</b></li>`);
+  if(reward)rows.push(`<li class="loot"><span>Loot</span><b>${esc(reward.t)}</b></li>`);
+  const o=document.createElement("div");o.className="lvlup"+(rankUp?" rank":"");o.setAttribute("role","dialog");o.setAttribute("aria-label",`Level ${to}`);o.style.setProperty("--beam",beam);
+  o.innerHTML=`<div class="lv-pillar"></div>${rankUp?'<div class="lv-rays"></div>':""}<div class="lv-rune">${runeSVG(48)}</div><div class="lv-rune r2">${runeSVG(24)}</div>
+    <canvas class="lv-fx lv-fx3"></canvas>${rankUp?'<canvas class="lv-fx lv-fx2"></canvas>':""}<canvas class="lv-fx lv-fx1"></canvas>
+    <div class="lv-in">
+      <div class="lv-badge">${badge(ti1,rankUp?170:128)}<span class="lv-shine"></span></div>
+      <div class="lv-banner"><span class="lv-wing"></span><span>${rankUp?"RANK UP!":"LEVEL UP!"}</span><span class="lv-wing r"></span></div>
+      <div class="lv-num"><span>LEVEL</span><b id="lv-count">${reduce?to:from}</b></div>
+      ${rankUp?`<div class="lv-rank">${esc(TIERS[ti1][0].toUpperCase())}</div>`:`<div class="lv-sub">${esc(TIERS[ti1][0])}</div>`}
+      <ul class="lv-stats">${rows.map((r,k)=>r.replace("<li",`<li style="animation-delay:${1.15+k*.18}s"`)).join("")}</ul>
+      <button class="btn lv-ok" id="lv-ok" style="animation-delay:${1.3+rows.length*.18}s">${rankUp?"Claim your rank":"Keep going"}</button><span class="lv-tap">Tap anywhere to close</span></div>`;
   document.body.appendChild(o);
   const close=()=>{if(!o.isConnected)return;o.classList.add("out");setTimeout(()=>o.remove(),300);};
-  o.addEventListener("click",close);setTimeout(close,rankUp?9000:6500);
-  try{navigator.vibrate&&navigator.vibrate(rankUp?[40,60,40,60,120]:[30,50,80]);}catch(e){}
-  const notes=rankUp?[523,659,784,1047,1319]:[523,659,784,1047];notes.forEach((f,i)=>setTimeout(()=>beep(f,i===notes.length-1?380:140),120+i*110));
-  if(rankUp)setTimeout(()=>{beep(784,500);beep(1047,500);},1050);
+  o.addEventListener("click",close);setTimeout(close,rankUp?10000:7500);
+  try{navigator.vibrate&&navigator.vibrate(rankUp?[40,60,40,60,140]:[30,50,90]);}catch(e){}
+  const fan=rankUp?[[392,0],[523,140],[659,280],[784,420],[1047,600],[784,820],[1047,940],[1319,1060]]:[[523,0],[659,120],[784,240],[1047,380],[1319,560]];
+  fan.forEach(([f,t],i)=>setTimeout(()=>beep(f,i===fan.length-1?520:150),150+t));
+  if(rankUp)setTimeout(()=>{beep(659,700);beep(1047,700);beep(1568,600);},1350);
   if(reduce)return;
-  const cv=o.querySelector(".lv-fx1"),cv2=o.querySelector(".lv-fx2"),cnt=o.querySelector("#lv-count");
-  requestAnimationFrame(()=>{burst(cv,ti1,rankUp);if(cv2)setTimeout(()=>{if(cv2.isConnected)burst(cv2,ti1,true);},1000);});
-  const steps=Math.max(1,to-from),dur=900;let k=0;
-  const iv=setInterval(()=>{k++;const v=Math.min(to,from+Math.ceil(k*steps/Math.max(1,Math.min(steps,12))));if(cnt){cnt.textContent=v;cnt.classList.remove("bump");void cnt.offsetWidth;cnt.classList.add("bump");}if(v>=to)clearInterval(iv);},dur/Math.max(1,Math.min(steps,12)));
+  const cv=o.querySelector(".lv-fx1"),cv2=o.querySelector(".lv-fx2"),cv3=o.querySelector(".lv-fx3"),cnt=o.querySelector("#lv-count");
+  requestAnimationFrame(()=>{rise(cv3,beam);setTimeout(()=>{if(cv.isConnected)burst(cv,ti1,rankUp);},450);if(cv2)setTimeout(()=>{if(cv2.isConnected)burst(cv2,ti1,true);},1100);});
+  const steps=Math.max(1,Math.min(to-from,12));let k=0;
+  setTimeout(()=>{const iv=setInterval(()=>{k++;const v=Math.min(to,from+Math.ceil(k*(to-from)/steps));if(cnt){cnt.textContent=v;cnt.classList.remove("bump");void cnt.offsetWidth;cnt.classList.add("bump");}if(v>=to)clearInterval(iv);},700/steps);},500);
 }
 
 /* ---------- render ---------- */

@@ -141,7 +141,7 @@ textarea{min-height:110px;resize:vertical}
 
 .tabs{isolation:isolate;position:fixed;left:0;right:0;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
-.tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+.tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) 88px repeat(2,minmax(0,1fr));gap:2px;align-items:end}
 .tabs button{position:relative;background:none;border:0;padding:9px 1px 7px;border-radius:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--display);font-weight:800;font-size:9.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.09em}
 .tabs button::before{content:"";position:absolute;top:-7px;left:50%;width:0;height:2px;background:var(--gold);transform:translateX(-50%);transition:width .25s ease}
 .tabs button[aria-selected="true"]::before{width:28px}
@@ -317,6 +317,17 @@ body.light{--mood1:#787262;--mood2:#958d7c;--mood3:#6f9a90;--mood4:#3f6f84;--moo
 .mood-strip{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;align-items:end;height:54px}
 .mood-strip i{display:block;border-radius:2px 2px 0 0;background:var(--c,var(--line));min-height:4px}
 .mood-strip i.none{background:var(--line);opacity:.5}
+.tabs button.tab-today{padding:0 0 7px;gap:5px;color:var(--fg)}
+.tabs button.tab-today::before{display:none}
+.tab-today .bubble{width:66px;height:66px;margin-top:-30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--gold-2) 55%,var(--gold)),var(--gold) 60%,color-mix(in srgb,var(--gold) 70%,#000));color:var(--on-gold);border:3px solid var(--bg);box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 22px color-mix(in srgb,var(--gold) 55%,transparent);transition:transform .2s ease,box-shadow .2s ease}
+.tab-today .bubble svg{width:32px!important;height:32px!important}
+.tab-today:hover .bubble{transform:translateY(-2px)}
+.tab-today[aria-selected="true"] .bubble{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 2px var(--gold-2),0 0 30px color-mix(in srgb,var(--gold) 75%,transparent)}
+.tab-today[aria-selected="false"] .bubble{animation:todayPulse 2.8s ease-in-out infinite}
+@keyframes todayPulse{50%{box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 34px color-mix(in srgb,var(--gold) 80%,transparent)}}
+.prof-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;padding:0}
+.prof-btn svg{width:17px;height:17px}
+.prof-btn[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 @media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -808,7 +819,8 @@ const ICONS={
   train:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/></svg>',
   journal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h10a2 2 0 012 2v14H8a2 2 0 01-2-2zM6 18a2 2 0 012-2h10"/></svg>',
   rank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 2.5V12c0 4.2-3 7.2-7 9-4-1.8-7-4.8-7-9V5.5z"/></svg>'};
-const TABS=[["today","Today"],["train","Train"],["stats","Stats"],["crew","Crew"],["journal","Journal"],["rank","Profile"]];
+const TABS=[["train","Train"],["stats","Stats"],["today","Today"],["crew","Crew"],["journal","Journal"],["rank","Profile"]];
+const BAR_TABS=TABS.filter(t=>t[0]!=="rank");
 let tab="today";
 try{tab=localStorage.getItem(KEY+".tab")||"today";}catch(e){}
 if(TABS.some(t=>t[0]===location.hash.slice(1)))tab=location.hash.slice(1);
@@ -1587,11 +1599,11 @@ function moodCard(){const cur=moodOf(TODAY);
 /* ---------- render ---------- */
 function render(){
   $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
-  $("#hdr-ctl").innerHTML=`<div class="lang-tg" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${LANG==="en"}" lang="en">EN</button><button data-lang="es" aria-pressed="${LANG==="es"}" lang="es">ES</button></div>
+  $("#hdr-ctl").innerHTML=`<button class="prof-btn" data-tab="rank" aria-pressed="${tab==="rank"}" aria-label="Profile" title="Profile">${ICONS.rank}</button><div class="lang-tg" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${LANG==="en"}" lang="en">EN</button><button data-lang="es" aria-pressed="${LANG==="es"}" lang="es">ES</button></div>
     <button class="theme-tg" data-theme-toggle="1" aria-label="${S.theme==="light"?"Switch to dark mode":"Switch to light mode"}" title="${S.theme==="light"?"Dark mode":"Light mode"}">${S.theme==="light"
       ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>'
       :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>'}</button>`;
-  $("#tabs").innerHTML=TABS.map(([k,n])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}${n}</button>`).join("");
+  $("#tabs").innerHTML=BAR_TABS.map(([k,n])=>k==="today"?`<button role="tab" class="tab-today" aria-selected="${tab===k}" data-tab="today" aria-label="Today"><span class="bubble">${ICONS.today}</span>${n}</button>`:`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}${n}</button>`).join("");
   const kept={};document.querySelectorAll("[data-keep]").forEach(el=>{if(el.id&&el.value)kept[el.id]=el.value;}); const keep=$("#jtext")?.value, keepC=$("#cust-t")?.value, keepW=$("#w-in")?.value, keepN=$("#w-note")?.value;
   $("#view").innerHTML={today:viewToday,train:viewTrain,stats:viewStats,crew:viewCrew,journal:viewJournal,rank:viewRank}[tab]();
   if(keep&&$("#jtext"))$("#jtext").value=keep; if(keepC&&$("#cust-t"))$("#cust-t").value=keepC;

@@ -303,6 +303,20 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .plib-m{font-size:12px;color:var(--muted);white-space:nowrap}
 .plib-row svg{width:14px;height:14px;color:var(--muted)}
 .plib-on{border:1px solid var(--gold);border-radius:4px;padding:12px;background:color-mix(in srgb,var(--gold) 10%,transparent)}
+:root{--mood1:#787262;--mood2:#9a9384;--mood3:#8fa7ad;--mood4:#4e8197;--mood5:#cedfd9}
+body.light{--mood1:#787262;--mood2:#958d7c;--mood3:#6f9a90;--mood4:#3f6f84;--mood5:#2f5d70}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mood{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px;background:var(--surface-2);border:1px solid transparent;border-radius:6px;color:var(--mc);font-size:12px;cursor:pointer;transition:transform .15s ease,border-color .2s}
+.mood span{color:var(--muted);font-size:11.5px;letter-spacing:.04em}
+.mood svg{width:38px;height:38px;transition:transform .2s ease}
+.mood:hover svg{transform:scale(1.08)}
+.mood[aria-pressed="true"]{border-color:var(--mc);background:color-mix(in srgb,var(--mc) 16%,var(--surface-2))}
+.mood[aria-pressed="true"] span{color:var(--fg)}
+.mood[aria-pressed="true"] svg{transform:scale(1.12)}
+.mood-bar{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--mood1),var(--mood2),var(--mood3),var(--mood4),var(--mood5));opacity:.8}
+.mood-strip{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;align-items:end;height:54px}
+.mood-strip i{display:block;border-radius:2px 2px 0 0;background:var(--c,var(--line));min-height:4px}
+.mood-strip i.none{background:var(--line);opacity:.5}
 @media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -584,7 +598,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0,ach:{},milestones:{}});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0,ach:{},milestones:{},moods:{}});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -620,7 +634,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","Program Library":"Biblioteca de programas","Search programs and challenges":"Busca programas y retos","Search programs":"Buscar programas","Challenges":"Retos","Free":"Gratis","Pro":"Pro","Active":"Activo","Details":"Detalles","Length":"Duración","Tasks a day":"Tareas al día","Completion bonus":"Bono al terminar","First week":"Primera semana","Final week":"Última semana","Start this program":"Empezar este programa","Start this challenge":"Empezar este reto","Starting replaces your current program.":"Empezar reemplaza tu programa actual.","Popular challenges":"Retos populares","Popular Challenges":"Retos populares","Challenge":"Reto","Start a program or challenge":"Empieza un programa o reto","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","How did you feel today?":"¿Cómo te sentiste hoy?","Rough":"Pésimo","Low":"Bajo","Okay":"Normal","Good":"Bien","Great":"Excelente","Last 14 days":"Últimos 14 días","Mood saved":"Estado guardado","Mood":"Estado de ánimo","Tap a face. You can change it any time today.":"Toca una cara. Puedes cambiarla cuando quieras hoy.","Program Library":"Biblioteca de programas","Search programs and challenges":"Busca programas y retos","Search programs":"Buscar programas","Challenges":"Retos","Free":"Gratis","Pro":"Pro","Active":"Activo","Details":"Detalles","Length":"Duración","Tasks a day":"Tareas al día","Completion bonus":"Bono al terminar","First week":"Primera semana","Final week":"Última semana","Start this program":"Empezar este programa","Start this challenge":"Empezar este reto","Starting replaces your current program.":"Empezar reemplaza tu programa actual.","Popular challenges":"Retos populares","Popular Challenges":"Retos populares","Challenge":"Reto","Start a program or challenge":"Empieza un programa o reto","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -747,7 +761,7 @@ function mergeState(a,b){
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
   const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
-  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);m.ach=Object.assign({},b.ach,a.ach);m.milestones=Object.assign({},b.milestones,a.milestones);
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);m.ach=Object.assign({},b.ach,a.ach);m.milestones=Object.assign({},b.milestones,a.milestones);m.moods=Object.assign({},b.moods,a.moods);
   return m;
 }
 async function boot(){
@@ -900,10 +914,11 @@ function viewJournal(){
   const seg=`<div class="seg" style="grid-template-columns:repeat(3,1fr)" role="group" aria-label="Journal section"><button data-jv="entries" aria-pressed="${journalView==="entries"}">Entries</button><button data-jv="food" aria-pressed="${journalView==="food"}">Food</button><button data-jv="progress" aria-pressed="${journalView==="progress"}">Progress</button></div>`;
   if(journalView==="food")return viewFood(seg);
   if(journalView==="entries")return `<section class="sec">${head(1,"Night Journal")}${seg}
+    ${moodCard()}
     <div class="card"><span class="label">Tonight's prompt</span><div class="prompt">${p}</div>
       <label for="jtext" class="label">Your entry</label><textarea id="jtext" placeholder="Write a few honest lines…"></textarea>
       <button class="btn" id="jsave" style="align-self:flex-start">Save entry</button></div>
-    <div class="card"><span class="label">Past entries</span>${S.journal.length?S.journal.slice().reverse().map(e=>`<div class="entry"><span class="label">${new Date(e.d).toLocaleDateString(L(),{month:"short",day:"numeric"})} · ${esc(e.p)}</span><p>${esc(e.t)}</p></div>`).join(""):'<p class="empty">No entries yet. Your first one will show up here.</p>'}</div></section>`;
+    <div class="card"><span class="label">Past entries</span>${S.journal.length?S.journal.slice().reverse().map(e=>`<div class="entry"><span class="label">${e.m?`<span style="color:var(--mood${e.m});vertical-align:-5px;margin-right:6px;display:inline-block">${faceSVG(e.m,20)}</span>`:""}${new Date(e.d).toLocaleDateString(L(),{month:"short",day:"numeric"})} · ${esc(e.p)}</span><p>${esc(e.t)}</p></div>`).join(""):'<p class="empty">No entries yet. Your first one will show up here.</p>'}</div></section>`;
   const ps=(photos||[]).slice().sort((a,b)=>a.d-b.d),first=ps[0],last=ps[ps.length-1];
   const wpts=ps.filter(x=>x.w>0),delta=wpts.length>1?(S.unit==="kg"?1:2.20462)*(wpts[wpts.length-1].w-wpts[0].w):null;
   const dstr=x=>new Date(x.d).toLocaleDateString(L(),{month:"short",day:"numeric",year:"numeric"});
@@ -1150,13 +1165,14 @@ function calendarSection(){
 function dayDetail(d){
   const m=dayMap(d),keys=Object.keys(m),wos=(S.workouts||[]).filter(w=>w.date===d),jr=S.journal.filter(j=>iso(new Date(j.d))===d),ph=(photos||[]).filter(p=>iso(new Date(p.d))===d);
   const n=dayCount(d),status=n>=DAILY_GOAL?`<span class="chip hot">Goal hit</span>`:S.frozen[d]?`<span class="chip">Freeze used</span>`:n?`<span class="chip">${n}/${DAILY_GOAL} done</span>`:"";
-  const fd=foodDay(d),ft=foodTotals(d);const empty=!keys.length&&!wos.length&&!jr.length&&!ph.length&&!fd.length;
+  const fd=foodDay(d),ft=foodTotals(d);const empty=!keys.length&&!wos.length&&!jr.length&&!ph.length&&!fd.length&&!moodOf(d);
   const setTxt=(x,st)=>x.k==="weighted"?`${st.r||0}${st.w?" × "+r1(toU(st.w))+" "+S.unit:""}`:x.k==="reps"?`${st.r||0} reps`:x.k==="time"?clock(st.s||0):`${st.m||0} min${st.dist?" · "+r1(toD(st.dist))+" "+distU():""}`;
   return `<div class="card" id="day-detail"><div class="spread"><div><span class="label">${esc(fmt(d,{weekday:"long"}))}</span><h3 style="font-size:22px">${esc(fmt(d,{month:"long",day:"numeric"}))}</h3></div><div style="text-align:right"><span class="xp">+${sumDay(d)} XP</span><div style="margin-top:4px">${status}</div></div></div>
     ${empty?`<p class="empty">${d===TODAY?"Nothing logged yet today.":"Nothing logged this day."}</p>`:""}
     ${keys.length?`<div><span class="label">Completed</span>${keys.map(k=>`<div class="detail-item"><span class="dot" style="--c:var(${(CATS[m[k][1]]||CATS.physical).c})"></span><span>${esc(itemName(k,d))}</span><span class="xp">+${m[k][0]}</span></div>`).join("")}</div>`:""}
     ${wos.map(w=>`<div><span class="label">Workout · ${esc(w.type)}</span><div class="detail-item" style="grid-template-columns:1fr auto"><b style="font-weight:500">${esc(w.name||w.type)} · ${clock(w.dur)}</b><span class="small muted">${w.sets} sets${w.vol?" · "+Math.round(toU(w.vol)).toLocaleString()+" "+S.unit:""}</span></div>
       ${w.ex.map(x=>`<div class="detail-item" style="grid-template-columns:1fr"><span>${esc(x.n)}</span><span class="small muted">${x.sets.map(st=>setTxt(x,st)).join(" · ")}</span></div>`).join("")}</div>`).join("")}
+    ${moodOf(d)?`<div class="row" style="flex-wrap:nowrap"><span style="color:var(--mood${moodOf(d).v})">${faceSVG(moodOf(d).v,30)}</span><span><span class="label">Mood</span><br>${MOODS[moodOf(d).v-1].n}</span></div>`:""}
     ${fd.length?`<div><span class="label">Food · ${ft.cal.toLocaleString()} kcal · P ${ft.p}g · C ${ft.c}g · F ${ft.f}g</span>${fd.map(x=>`<div class="detail-item" style="grid-template-columns:auto 1fr auto"><span class="small muted">${new Date(x.t).toLocaleTimeString(L(),{hour:"numeric",minute:"2-digit"})}</span><span>${esc(x.name)}</span><span class="num">${x.cal}</span></div>`).join("")}</div>`:""}
     ${jr.length?`<div><span class="label">Journal</span>${jr.map(j=>`<div class="entry"><span class="small muted">${esc(j.p)}</span><p>${esc(j.t)}</p></div>`).join("")}</div>`:""}
     ${ph.length?`<div><span class="label">Progress check-in</span><div class="row">${ph.map(x=>`${x.img?`<img src="${x.img}" alt="Check-in photo" style="width:72px;aspect-ratio:3/4;object-fit:cover;border-radius:3px">`:""}${showW(x.w)?`<span class="num">${showW(x.w)}</span>`:""}${x.note?`<span class="small muted">${esc(x.note)}</span>`:""}`).join("")}</div></div>`:""}
@@ -1551,6 +1567,23 @@ function achSection(){const got=ACHIEVEMENTS.filter(a=>S.ach&&S.ach[a.id]).lengt
   return `<section class="sec">${head(6,"Achievements",`<span class="label">${got} of ${ACHIEVEMENTS.length} unlocked</span>`)}<div class="card"><div class="ach-grid">${ACHIEVEMENTS.map(a=>{const on=S.ach&&S.ach[a.id];
     return `<div class="ach-tile ${on?"":"lock"}" title="${esc(ad(a))}">${badge(a.ti,40,!on)}<b>${esc(an(a))}</b><span>${esc(ad(a))}</span></div>`;}).join("")}</div></div></section>`;}
 
+/* ---------- mood ---------- */
+const MOODS=[{v:1,n:"Rough"},{v:2,n:"Low"},{v:3,n:"Okay"},{v:4,n:"Good"},{v:5,n:"Great"}];
+function faceSVG(v,size=38){
+  const mouth=["M15 31 Q24 23 33 31","M16 30 Q24 26 32 30","M16 29 L32 29","M15 27 Q24 34 33 27","M13 26 Q24 38 35 26"][v-1];
+  const brows=v===1?'<path d="M14 16 L20 18 M34 16 L28 18" stroke-linecap="round"/>':v===5?'<path d="M14 15 Q17 13 20 15 M28 15 Q31 13 34 15" stroke-linecap="round"/>':"";
+  const eyes=v===5?'<path d="M15 21 Q17.5 18 20 21 M28 21 Q30.5 18 33 21" stroke-linecap="round"/>':'<circle cx="17.5" cy="21" r="2.2" fill="currentColor" stroke="none"/><circle cx="30.5" cy="21" r="2.2" fill="currentColor" stroke="none"/>';
+  const fill=v===5?'<path d="M13 26 Q24 38 35 26 Z" fill="currentColor" opacity=".25" stroke="none"/>':"";
+  return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="24" cy="24" r="20.5"/>${brows}${eyes}${fill}<path d="${mouth}" stroke-linecap="round"/></svg>`;}
+const moodOf=d=>(S.moods||{})[d]||null;
+function moodCard(){const cur=moodOf(TODAY);
+  const strip=[...Array(14)].map((_,k)=>addDays(TODAY,k-13)).map(d=>{const m=moodOf(d);return m?`<i style="--c:var(--mood${m.v});height:${m.v*20}%" title="${esc(fmt(d,{month:"short",day:"numeric"}))}: ${MOODS[m.v-1].n}"></i>`:`<i class="none" title="${esc(fmt(d,{month:"short",day:"numeric"}))}"></i>`;}).join("");
+  return `<div class="card"><span class="label">How did you feel today?</span>
+    <div class="moods" role="group" aria-label="How did you feel today?">${MOODS.map(m=>`<button class="mood" style="--mc:var(--mood${m.v})" data-mood="${m.v}" aria-pressed="${!!cur&&cur.v===m.v}" aria-label="${m.n}">${faceSVG(m.v)}<span>${m.n}</span></button>`).join("")}</div>
+    <div class="mood-bar"></div>
+    <p class="small muted">Tap a face. You can change it any time today.</p>
+    ${Object.keys(S.moods||{}).length?`<div><span class="label">Last 14 days</span><div class="mood-strip" style="margin-top:8px">${strip}</div></div>`:""}</div>`;}
+
 /* ---------- render ---------- */
 function render(){
   $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
@@ -1707,6 +1740,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("[data-goprog]")){tab="train";render();setTimeout(()=>{const h=[...document.querySelectorAll("h2")].find(x=>/^(Program Library|Biblioteca de programas)$/.test(x.textContent));if(h)h.scrollIntoView({block:"start"});},50);return;}
   const plf=e.target.closest("[data-plf]");if(plf){plF=plf.dataset.plf;plShow=6;document.querySelectorAll("[data-plf]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.plf===plF)));const r=$("#pl-results");if(r)r.innerHTML=plResults();return;}
   if(e.target.id==="pl-more"){plShow+=10;const r=$("#pl-results");if(r)r.innerHTML=plResults();return;}
+  const md=e.target.closest("[data-mood]");if(md){const v=+md.dataset.mood;S.moods=S.moods||{};S.moods[TODAY]={v,t:Date.now()};save();track("mood");toast("Mood saved");render();return;}
   const id=e.target.id;
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
   if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}
@@ -1737,7 +1771,7 @@ document.addEventListener("click",async e=>{
   if(id==="rest-skip"){restEnd=0;const rb=$("#rest");if(rb)rb.hidden=true;return;}
   if(id==="sum-close"){lastSummary=null;render();return;}
   if(id==="cust-add"){const v=$("#cust-t").value.trim();if(!v){toast("Type a habit first");return;}S.custom.push({id:Date.now().toString(36),t:v.slice(0,60),cat:$("#cust-c").value});$("#cust-t").value="";save();toast("Habit added to your daily list");render();return;}
-  if(id==="jsave"){const v=$("#jtext").value.trim();if(!v){toast("Write something first");return;}S.journal.push({d:Date.now(),p:PROMPTS[new Date().getDay()%PROMPTS.length],t:v});$("#jtext").value="";save();render();toast("Entry saved");return;}
+  if(id==="jsave"){const v=$("#jtext").value.trim();if(!v){toast("Write something first");return;}S.journal.push({d:Date.now(),p:PROMPTS[new Date().getDay()%PROMPTS.length],t:v,m:moodOf(TODAY)?moodOf(TODAY).v:null});$("#jtext").value="";save();render();toast("Entry saved");return;}
   if(id==="pick-photo"){$("#photo-file").click();return;}
   if(id==="save-checkin"){saveCheckin();return;}
   if(id==="recap-save"){if(!dl||!recapBlob)return;try{await dl.save({filename:`owluxe-week-${weekStart(TODAY)}.png`,data:recapBlob});toast("Recap saved");}catch(err){if(err&&err.code!=="declined")toast("Couldn't save the image. Long-press it instead.");}return;}

@@ -219,6 +219,36 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .lang-tg button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold)}
 .theme-tg{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;padding:0}
 .theme-tg svg{width:17px;height:17px}
+.lvlup{position:fixed;inset:0;z-index:40;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(78,129,151,.45),transparent 62%),rgba(0,0,0,.94);animation:lvFade .35s ease both;padding:24px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));cursor:pointer}
+.lvlup.out{animation:lvOut .3s ease forwards}
+.lv-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.lv-rays{position:absolute;left:50%;top:40%;width:900px;height:900px;margin:-450px 0 0 -450px;background:repeating-conic-gradient(from 0deg,rgba(206,223,217,.10) 0deg 6deg,transparent 6deg 18deg);border-radius:50%;-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:lvSpin 18s linear infinite,lvFade 1s ease both;pointer-events:none}
+.lv-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:#f4f2e6;max-width:420px}
+.lv-badge{position:relative;animation:lvPop .9s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 0 26px rgba(78,129,151,.85)) drop-shadow(0 0 60px rgba(206,223,217,.25))}
+.lvlup.rank .lv-badge{animation:lvFlip 1.3s cubic-bezier(.2,1.2,.35,1) both}
+.lv-badge svg{display:block}
+.lv-shine{position:absolute;inset:0;overflow:hidden;border-radius:12px;pointer-events:none}
+.lv-shine::after{content:"";position:absolute;top:-20%;bottom:-20%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-160%) skewX(-12deg);animation:lvShine 1.4s 1s ease both;mix-blend-mode:overlay}
+.lv-kicker{color:#cedfd9!important;letter-spacing:.32em!important;animation:lvUp .5s .35s both}
+.lv-num{display:flex;align-items:baseline;gap:12px;font-family:var(--display);font-weight:800;animation:lvUp .5s .45s both}
+.lv-num span{font-size:18px;letter-spacing:.14em;color:#8f8a7c}
+.lv-num b{font-size:100px;line-height:.9;letter-spacing:-.05em;color:#f4f2e6;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(78,129,151,.75)}
+.lv-num b.bump{animation:lvBump .35s ease}
+.lv-rank{font-family:var(--display);font-style:italic;font-weight:800;font-size:clamp(28px,9vw,42px);letter-spacing:-.01em;color:#cedfd9;text-shadow:0 0 30px rgba(78,129,151,.8);animation:lvSlam .65s 1s cubic-bezier(.2,1.5,.4,1) both}
+.lv-sub{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#cedfd9;animation:lvUp .5s .6s both}
+.lv-reward{border:1px solid rgba(206,223,217,.45);padding:9px 14px;border-radius:2px;color:#f4f2e6;font-size:14px;animation:lvUp .5s 1.3s both;background:rgba(78,129,151,.18)}
+.lv-ok{margin-top:10px;animation:lvUp .5s 1.4s both}
+.lv-tap{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8f8a7c;animation:lvUp .5s 1.8s both}
+@keyframes lvFade{from{opacity:0}}
+@keyframes lvOut{to{opacity:0;transform:scale(1.04)}}
+@keyframes lvSpin{to{transform:rotate(360deg)}}
+@keyframes lvPop{0%{transform:scale(.15) rotate(-30deg);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes lvFlip{0%{transform:perspective(700px) rotateY(720deg) scale(.2);opacity:0}70%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes lvShine{to{transform:translateX(360%) skewX(-12deg)}}
+@keyframes lvUp{from{opacity:0;transform:translateY(18px)}}
+@keyframes lvSlam{0%{opacity:0;transform:scale(2.6);letter-spacing:.35em}100%{opacity:1;transform:none}}
+@keyframes lvBump{50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.lvlup,.lvlup *{animation:none!important}}
 @media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -451,7 +481,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -487,7 +517,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -522,7 +552,7 @@ const ES_RX=[
  [/^Free plan: (\d+) of (\d+) routines\. Pro removes the limit\.$/,"Plan gratis: $1 de $2 rutinas. Pro quita el límite."],[/^(.+) · (\d+) exercises$/,(m,a,b)=>`${tr(a)} · ${b} ejercicios`],
  [/^— attributed to (.+)$/,"— atribuida a $1"],[/^Workout saved, \+(\d+) XP$/,"Entreno guardado, +$1 XP"],[/^Logged (\d+) kcal$/,"Registrado: $1 kcal"],[/^(.+) added$/,(m,a)=>`${a} agregado`],
  [/^Showing (\d+) of (\d+)\. Search to narrow it down\.$/,"Mostrando $1 de $2. Busca para filtrar."],[/^Show more \((\d+)\)$/,"Ver más ($1)"],[/^(\d+) moves$/,"$1 ejercicios"],
- [/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
+ [/^Reward unlocked: (.+)$/,(m,a)=>"Premio desbloqueado: "+tr(a)],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
 ];
 function tr(s){if(LANG!=="es"||!s)return s;const k=s.trim();if(!k)return s;if(ES[k]!=null)return s.replace(k,ES[k]);for(const [r,f] of ES_RX){if(r.test(k))return s.replace(k,k.replace(r,f));}return s;}
 function trTree(root){if(LANG!=="es"||!root)return;if(root.nodeType===3){const v=root.nodeValue,n=tr(v);if(n!==v)root.nodeValue=n;return;}if(root.nodeType!==1)return;
@@ -611,7 +641,7 @@ function mergeState(a,b){
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
   const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
-  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);
   return m;
 }
 async function boot(){
@@ -1227,8 +1257,55 @@ function adminCard(){
   return `<div class="stats"><div class="stat"><span class="label">Level</span><b>${lv}</b></div><div class="stat"><span class="label">Earned XP</span><b>${baseXP()}</b></div><div class="stat"><span class="label">Admin XP</span><b>${S.adminXP||0}</b></div></div>
     <span class="label">Add XP</span><div class="pills">${[100,500,1000,5000].map(n=>`<button class="pill" data-axp="${n}">+${n.toLocaleString()}</button>`).join("")}</div>
     <span class="label">Jump to rank</span><div class="pills">${TIERS.map(([n,l],i)=>`<button class="pill" data-atier="${i}" aria-pressed="${tierIdx(lv)===i}">${n} · Lv ${l}</button>`).join("")}</div>
+    <span class="label">Preview animations</span><div class="row"><button class="btn sm" id="adm-prev-lv">Preview level-up</button><button class="btn sm" id="adm-prev-rank">Preview rank-up</button></div>
     <div class="row"><button class="btn ghost sm" id="adm-clear">Remove admin XP</button><button class="btn ghost sm" id="adm-pro">${isPro()?"Turn Pro off":"Turn Pro on"}</button>${S.admin&&!ownerView?`<button class="btn ghost sm" id="adm-lock">Lock admin</button>`:""}</div>
     <p class="note">Admin XP only changes your own rank on this account. It never counts on the leaderboard.</p>`;
+}
+
+/* ---------- level-up celebration ---------- */
+function checkLevel(){const lv=levelOf(totalXP());
+  if(!S.seenLevel){S.seenLevel=lv;saveLocal();return;}
+  if(lv>S.seenLevel){const from=S.seenLevel;S.seenLevel=lv;save();if(!document.querySelector(".lvlup"))celebrate(from,lv);}
+  else if(lv<S.seenLevel){S.seenLevel=lv;saveLocal();}}
+function burst(cv,ti,big,delay=0){
+  const ctx=cv.getContext("2d");if(!ctx)return;const dpr=Math.min(2,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
+  const cx=W/2,cy=H*.4,[d,l]=METALS[ti],cols=[l,d,l,"#4e8197","#cedfd9","#f4f2e6"],N=big?230:140,ps=[];
+  for(let i=0;i<N;i++){const a=Math.random()*Math.PI*2,sp=(big?8:6)*(.3+Math.random()*.9);
+    ps.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2.5,r:Math.random()*6,vr:(Math.random()-.5)*.35,w:3+Math.random()*8,h:1.5+Math.random()*3.5,c:cols[i%cols.length],life:1,dec:.005+Math.random()*.006,spark:Math.random()<.25});}
+  const t0=performance.now()+delay*1000;
+  (function f(t){if(!cv.isConnected)return;const el=(t-t0)/1000;if(el<0){requestAnimationFrame(f);return;}
+    if(delay===0)ctx.clearRect(0,0,W,H);
+    for(const k of [0,.16,.32]){const e=el-k;if(e>0&&e<.85){ctx.beginPath();ctx.arc(cx,cy,30+e*Math.max(W,H)*.75,0,Math.PI*2);ctx.strokeStyle=`rgba(206,223,217,${(.85-e)*.55})`;ctx.lineWidth=k?1.5:3;ctx.stroke();}}
+    let alive=0;for(const p of ps){if(p.life<=0)continue;alive++;p.vy+=.11;p.vx*=.985;p.vy*=.995;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life-=p.dec;
+      ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.translate(p.x,p.y);ctx.rotate(p.r);
+      if(p.spark){ctx.fillStyle="#f4f2e6";ctx.beginPath();ctx.arc(0,0,1.6,0,Math.PI*2);ctx.fill();}else{ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);}
+      ctx.restore();}
+    if(alive&&el<4)requestAnimationFrame(f);})(performance.now());
+}
+function celebrate(from,to,forceRank){
+  const old=document.querySelector(".lvlup");if(old)old.remove();
+  const ti0=tierIdx(from),ti1=tierIdx(to),rankUp=forceRank===true?true:forceRank===false?false:ti1>ti0,reward=REWARDS.find(r=>r.lv&&r.lv>from&&r.lv<=to);
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const o=document.createElement("div");o.className="lvlup"+(rankUp?" rank":"");o.setAttribute("role","dialog");o.setAttribute("aria-label",`Level ${to}`);
+  o.innerHTML=`${rankUp?'<div class="lv-rays"></div><canvas class="lv-fx lv-fx2"></canvas>':""}<canvas class="lv-fx lv-fx1"></canvas><div class="lv-in">
+    <div class="lv-badge">${badge(ti1,rankUp?176:132)}<span class="lv-shine"></span></div>
+    <span class="label lv-kicker">${rankUp?"New rank":"Level up"}</span>
+    <div class="lv-num"><span>LEVEL</span><b id="lv-count">${reduce?to:from}</b></div>
+    ${rankUp?`<div class="lv-rank">${esc(TIERS[ti1][0].toUpperCase())}</div>`:`<div class="lv-sub">${esc(TIERS[ti1][0])}</div>`}
+    ${reward?`<p class="lv-reward">Reward unlocked: ${esc(reward.t)}</p>`:""}
+    <button class="btn lv-ok" id="lv-ok">${rankUp?"Claim your rank":"Keep going"}</button><span class="lv-tap">Tap anywhere to close</span></div>`;
+  document.body.appendChild(o);
+  const close=()=>{if(!o.isConnected)return;o.classList.add("out");setTimeout(()=>o.remove(),300);};
+  o.addEventListener("click",close);setTimeout(close,rankUp?9000:6500);
+  try{navigator.vibrate&&navigator.vibrate(rankUp?[40,60,40,60,120]:[30,50,80]);}catch(e){}
+  const notes=rankUp?[523,659,784,1047,1319]:[523,659,784,1047];notes.forEach((f,i)=>setTimeout(()=>beep(f,i===notes.length-1?380:140),120+i*110));
+  if(rankUp)setTimeout(()=>{beep(784,500);beep(1047,500);},1050);
+  if(reduce)return;
+  const cv=o.querySelector(".lv-fx1"),cv2=o.querySelector(".lv-fx2"),cnt=o.querySelector("#lv-count");
+  requestAnimationFrame(()=>{burst(cv,ti1,rankUp);if(cv2)setTimeout(()=>{if(cv2.isConnected)burst(cv2,ti1,true);},1000);});
+  const steps=Math.max(1,to-from),dur=900;let k=0;
+  const iv=setInterval(()=>{k++;const v=Math.min(to,from+Math.ceil(k*steps/Math.max(1,Math.min(steps,12))));if(cnt){cnt.textContent=v;cnt.classList.remove("bump");void cnt.offsetWidth;cnt.classList.add("bump");}if(v>=to)clearInterval(iv);},dur/Math.max(1,Math.min(steps,12)));
 }
 
 /* ---------- render ---------- */
@@ -1245,6 +1322,7 @@ function render(){
   if(keepW&&$("#w-in"))$("#w-in").value=keepW; if(keepN&&$("#w-note"))$("#w-note").value=keepN;
   for(const k in kept){const el=document.getElementById(k);if(el)el.value=kept[k];}
   if(tab==="crew")fillNames(); if(tab==="stats")drawRecap();
+  checkLevel();
 }
 async function fillNames(){
   if(!user)return; const els=[...document.querySelectorAll("[data-uid]")]; if(!els.length)return;
@@ -1359,6 +1437,8 @@ document.addEventListener("click",async e=>{
   const id=e.target.id;
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
   if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}
+  if(id==="adm-prev-lv"&&adminOn()){const lv=levelOf(totalXP());celebrate(lv,lv+1,false);return;}
+  if(id==="adm-prev-rank"&&adminOn()){const ti=tierIdx(levelOf(totalXP())),nx=Math.min(ti+1,TIERS.length-1),to=TIERS[nx][1];celebrate(Math.max(1,to-1),to,true);return;}
   if(id==="adm-clear"&&adminOn()){S.adminXP=0;save();toast("Admin XP removed");render();return;}
   if(id==="adm-pro"&&adminOn()){S.pro=!S.pro;save();toast(S.pro?"Pro on":"Pro off");render();return;}
   if(id==="adm-lock"){S.admin=false;adminPrompt=false;save();toast("Admin locked");render();return;}

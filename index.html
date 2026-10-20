@@ -226,7 +226,7 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 
 <div class="app">
   <header class="top">
-    <div class="brand">
+    <div class="brand" id="brand" style="cursor:default">
       <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true" fill="var(--fg)"><path d="M6 12 C40 20 66 34 76 48 L72 22 C88 40 96 64 94 90 C86 66 72 50 52 38 C66 46 72 54 74 60 C60 52 40 40 6 12Z"/><path d="M40 40 C26 46 22 64 32 74 C40 82 56 82 66 74 C54 78 42 74 38 64 C35 56 36 48 40 40Z"/><path d="M48 56 C46 64 50 70 58 70 L62 66 C56 64 50 60 48 56Z"/></svg>
       <h1 style="font-size:22px">Owluxe</h1>
     </div>
@@ -340,7 +340,9 @@ const PREMIUM = {
   checkoutUrl: "",
   codeHashes: ["c0704e4b9c243abe60e8576076ea9005c60ba820a356c2e8441b0ee1394042b8"],
 };
-const FREE_ROUTINES = 2;   // saved routines on the free plan
+const FREE_ROUTINES = 2;
+/* Admin mode: SHA-256 of your admin passcode (UPPERCASE letters and numbers only). The app owner on claude.ai gets admin automatically. */
+const ADMIN_HASH = "5336ecf963edfe4fadc220bd360a59a3c5494c63cceb7da8397eceb10be6b839";   // saved routines on the free plan
 
 /* Programs. day(n) returns that day's tasks as [English, Spanish, category, XP]. */
 const PROGRAMS = [
@@ -449,7 +451,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark"});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -562,7 +564,7 @@ const dayMap=d=>S.days[d]||{};
 const dayCount=d=>Object.keys(dayMap(d)).length;
 const dayOk=d=>dayCount(d)>=DAILY_GOAL||!!S.frozen[d];
 const sumDay=d=>Object.values(dayMap(d)).reduce((a,v)=>a+v[0],0);
-const totalXP=()=>Object.keys(S.days).reduce((a,d)=>a+sumDay(d),0)+refXP();
+const totalXP=()=>Object.keys(S.days).reduce((a,d)=>a+sumDay(d),0)+refXP()+(S.adminXP||0);
 const weekXP=(wk=weekStart(TODAY))=>Object.keys(S.days).filter(d=>weekStart(d)===wk).reduce((a,d)=>a+sumDay(d),0);
 const weekDone=(wk=weekStart(TODAY))=>Object.keys(S.days).filter(d=>weekStart(d)===wk).reduce((a,d)=>a+dayCount(d),0);
 const levelOf=xp=>Math.floor(Math.sqrt(xp/40))+1;
@@ -592,7 +594,7 @@ function save(){saveLocal();clearTimeout(saveTimer);saveTimer=setTimeout(pushRem
 async function pushRemote(){
   if(!stateRef)return; if(writing){again=true;return;} writing=true;
   try{await stateRef.set(JSON.parse(JSON.stringify(S)));syncState="synced";}catch(e){syncState="local";}
-  if(lbRef&&lbWritable){const xp=totalXP();const body={xp,week:weekStart(TODAY),weekXP:weekXP(),streak:streak(),level:levelOf(xp),crew:S.crew||"",updated:TODAY};const js=JSON.stringify(body);
+  if(lbRef&&lbWritable){const xp=totalXP()-(S.adminXP||0);const body={xp,week:weekStart(TODAY),weekXP:weekXP(),streak:streak(),level:levelOf(xp),crew:S.crew||"",updated:TODAY};const js=JSON.stringify(body);
     if(js!==lastLB){try{await lbRef.set(body);lastLB=js;}catch(e){lbWritable=false;if(tab==="crew")render();}}}
   writing=false; if(again){again=false;pushRemote();}
 }
@@ -609,7 +611,7 @@ function mergeState(a,b){
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
   const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
-  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);
   return m;
 }
 async function boot(){
@@ -618,6 +620,7 @@ async function boot(){
   [db,user,dl]=await Promise.all([C.use("db").catch(()=>null),C.use("user").catch(()=>null),C.use("downloads").catch(()=>null)]);
   sampleFn=await C.use("sample").catch(()=>null);if(sampleFn){try{const l=await sampleFn.limits();canImg=!!(l&&l.images);}catch(e){canImg=false;}}
   uid=user?await user.id():null;
+  try{ownerView=user?await user.isOwner():false;}catch(e){ownerView=false;}
   if(!db||!uid){lbState="off";refState="off";photos=localPhotos;render();return;}
   stateRef=db.doc("data/users/"+uid+"/state"); photosCol=stateRef.collection("photos"); lbRef=db.doc("leaderboard/"+uid);
   try{const snap=await stateRef.get();if(snap.exists){S=mergeState(S,snap.data());}syncState="synced";}catch(e){syncState="local";}
@@ -790,6 +793,7 @@ let resetArmed=false;
 function viewRank(){
   const lv=levelOf(totalXP()),ti=tierIdx(lv);
   return `${crest()}
+    ${adminOn()||adminPrompt?`<section class="sec">${head(0,"Admin")}<div class="card" style="border-color:var(--warn)">${adminCard()}</div></section>`:""}
     <section class="sec">${head(1,"Your Focus")}<div class="card"><p class="small muted">Adds a daily 2× bonus challenge from that plan.</p><div class="pills">${Object.entries(FOCUSES).map(([k,f])=>`<button class="pill" data-focus="${k}" aria-pressed="${S.focus===k}">${f.n}</button>`).join("")}</div>${S.focus?`<p class="small muted">${esc(FOCUSES[S.focus].d)}</p>`:""}</div></section>
     <section class="sec">${head(2,"My Habits")}<div class="card"><p class="small muted">Your own daily habits. Each shows up every day for +${CUSTOM_XP} XP.</p>
       ${S.custom.length?`<div>${S.custom.map(c=>`<div class="entry"><div class="spread"><span><span class="dot" style="--c:var(${CATS[c.cat].c});display:inline-block;margin-right:8px"></span>${esc(c.t)}</span><button class="btn ghost sm" data-rmc="${esc(c.id)}">Remove</button></div></div>`).join("")}</div>`:""}
@@ -1210,6 +1214,23 @@ async function importBackup(file){try{const data=JSON.parse(await file.text());i
   LANG=S.lang||LANG;applyTheme();save();render();toast("Backup restored");}
   catch(e){toast(LANG==="es"?"Ese archivo no es un respaldo de Owluxe.":"That file isn't an Owluxe backup.");}}
 
+/* ---------- admin ---------- */
+let ownerView=false,adminPrompt=false,adminMsg="",logoTaps=0,logoTimer=null;
+const adminOn=()=>!!S.admin||ownerView;
+async function adminUnlock(code){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(!code)return false;try{if(await sha256(code)===ADMIN_HASH){S.admin=true;save();return true;}}catch(e){}return false;}
+function baseXP(){return totalXP()-(S.adminXP||0);}
+function adminCard(){
+  if(!adminOn())return `<p class="small muted">Enter your admin passcode.</p>
+    <div class="row" style="flex-wrap:nowrap"><input type="password" id="adm-in" autocomplete="off" placeholder="Passcode" aria-label="Admin passcode"><button class="btn" id="adm-unlock">Unlock</button></div>
+    ${adminMsg?`<p class="small" style="color:var(--warn)">${esc(adminMsg)}</p>`:""}<button class="btn ghost sm" id="adm-close" style="align-self:flex-start">Close</button>`;
+  const lv=levelOf(totalXP());
+  return `<div class="stats"><div class="stat"><span class="label">Level</span><b>${lv}</b></div><div class="stat"><span class="label">Earned XP</span><b>${baseXP()}</b></div><div class="stat"><span class="label">Admin XP</span><b>${S.adminXP||0}</b></div></div>
+    <span class="label">Add XP</span><div class="pills">${[100,500,1000,5000].map(n=>`<button class="pill" data-axp="${n}">+${n.toLocaleString()}</button>`).join("")}</div>
+    <span class="label">Jump to rank</span><div class="pills">${TIERS.map(([n,l],i)=>`<button class="pill" data-atier="${i}" aria-pressed="${tierIdx(lv)===i}">${n} · Lv ${l}</button>`).join("")}</div>
+    <div class="row"><button class="btn ghost sm" id="adm-clear">Remove admin XP</button><button class="btn ghost sm" id="adm-pro">${isPro()?"Turn Pro off":"Turn Pro on"}</button>${S.admin&&!ownerView?`<button class="btn ghost sm" id="adm-lock">Lock admin</button>`:""}</div>
+    <p class="note">Admin XP only changes your own rank on this account. It never counts on the leaderboard.</p>`;
+}
+
 /* ---------- render ---------- */
 function render(){
   $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
@@ -1332,7 +1353,15 @@ document.addEventListener("click",async e=>{
   const rdl=e.target.closest("[data-rdel]");if(rdl){const rid=rdl.dataset.rdel;if(rDelArmed===rid){S.routines=S.routines.filter(x=>x.id!==rid);rDelArmed="";save();}else rDelArmed=rid;render();return;}
   const pst=e.target.closest("[data-pstart]");if(pst){const p=PROGRAMS.find(x=>x.id===pst.dataset.pstart);if(!p)return;if(p.premium&&!isPro()){tab="rank";render();return;}S.program={id:p.id,start:TODAY};leaveArmed=false;save();track("program-"+p.id);toast(`Started ${pn(p)}`);render();return;}
   const plv=e.target.closest("[data-pleave]");if(plv){if(leaveArmed){S.program=null;leaveArmed=false;save();}else leaveArmed=true;render();return;}
+  if(e.target.closest("#brand")){logoTaps++;clearTimeout(logoTimer);logoTimer=setTimeout(()=>logoTaps=0,1500);if(logoTaps>=5){logoTaps=0;adminPrompt=true;tab="rank";render();scrollTo(0,0);}return;}
+  const axp=e.target.closest("[data-axp]");if(axp&&adminOn()){const b=levelOf(totalXP());S.adminXP=(S.adminXP||0)+(+axp.dataset.axp);save();const a=levelOf(totalXP());toast(a>b?`Level ${a} reached`:`+${axp.dataset.axp} XP`);render();return;}
+  const at=e.target.closest("[data-atier]");if(at&&adminOn()){const need=xpFor(TIERS[+at.dataset.atier][1])-baseXP();S.adminXP=Math.max(0,need);save();toast(need<0?"You've already earned past that rank":`Now ${TIERS[+at.dataset.atier][0]}`);render();return;}
   const id=e.target.id;
+  if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
+  if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}
+  if(id==="adm-clear"&&adminOn()){S.adminXP=0;save();toast("Admin XP removed");render();return;}
+  if(id==="adm-pro"&&adminOn()){S.pro=!S.pro;save();toast(S.pro?"Pro on":"Pro off");render();return;}
+  if(id==="adm-lock"){S.admin=false;adminPrompt=false;save();toast("Admin locked");render();return;}
   if(id==="wo-saveroutine"&&S.active){if(saveRoutine(S.active.name||S.active.type,S.active.type,S.active.ex))render();return;}
   if(id==="pro-unlock"){const ok=await tryUnlock($("#pro-in")?.value);proMsg=ok?"":(LANG==="es"?"Ese código no funcionó. Revísalo e inténtalo otra vez.":"That code didn't work. Check it and try again.");if(ok){const i=$("#pro-in");if(i)i.value="";toast("Pro unlocked. Welcome to Owluxe Pro");}render();return;}
   if(id==="bk-export"){exportBackup();return;}
@@ -1387,6 +1416,7 @@ if(S.program){const p=curProg();if(!p||progDay()>p.days)S.program=null;}
 applyTheme();
 addEventListener("online",render);addEventListener("offline",render);
 if(STANDALONE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+(async()=>{const am=location.hash.match(/^#admin-([A-Za-z0-9]{6,32})$/);if(am&&await adminUnlock(am[1])){tab="rank";render();toast("Admin mode on");}})();
 (async()=>{const m=location.hash.match(/^#pro-([A-Za-z0-9]{6,32})$/);if(m&&await tryUnlock(m[1])){tab="rank";render();toast("Pro unlocked. Welcome to Owluxe Pro");}})();
 if(autoFreeze())setTimeout(()=>toast("Streak freeze used for yesterday"),600);
 saveLocal();render();boot();

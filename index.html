@@ -139,12 +139,16 @@ textarea{min-height:110px;resize:vertical}
 .recap img{width:100%;border-radius:4px;border:1px solid var(--line);display:block;background:var(--surface-2);aspect-ratio:4/5}
 .note{font-size:13px;color:var(--muted);border-left:2px solid var(--stone);padding-left:10px}
 
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+.tabs{isolation:isolate;position:fixed;left:0;right:0;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
 .tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
-.tabs button{background:none;border:0;padding:8px 1px;border-radius:4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+.tabs button{position:relative;background:none;border:0;padding:9px 1px 7px;border-radius:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--display);font-weight:800;font-size:9.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.09em}
+.tabs button::before{content:"";position:absolute;top:-7px;left:50%;width:0;height:2px;background:var(--gold);transform:translateX(-50%);transition:width .25s ease}
+.tabs button[aria-selected="true"]::before{width:28px}
 .tabs button svg{width:22px;height:22px}
-.tabs button[aria-selected="true"]{color:var(--gold-2);background:var(--surface)}
+.tabs button[aria-selected="true"]{color:var(--fg)}
+.tabs button[aria-selected="true"] svg{color:var(--gold-2)}
+.tabs::after{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6;pointer-events:none}
 .toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--gold);color:var(--on-gold);padding:10px 16px;border-radius:2px;font-weight:500;opacity:0;transition:.3s;pointer-events:none;z-index:6;max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .wo-clock{font-family:var(--display);font-weight:800;font-size:64px;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
@@ -204,6 +208,10 @@ input.si{padding:8px 6px;text-align:center}
 .sugg{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;width:100%;text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:9px 12px;margin-top:6px}
 .sugg span{font-size:12px;color:var(--muted)}
 .sugg:hover{border-color:var(--gold)}
+body.light{--bg:#f4f2e6;--surface:#fbfaf4;--surface-2:#e8e4d6;--line:#d5cfbd;--fg:#0b0b0b;--muted:#6b665a;--gold:#3f6f84;--gold-2:#2f5d70;--on-gold:#f4f2e6;--stone:#787262;--phys:#4e8197;--mind:#6f9a90;--soc:#787262;--disc:#1a1c1c;--warn:#a2621a;color-scheme:light}
+body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
+.pro-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.offline{display:inline-block;margin-top:4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--warn);color:var(--warn);padding:1px 6px;border-radius:99px}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -222,6 +230,7 @@ input.si{padding:8px 6px;text-align:center}
 <div class="toast" id="toast" role="status"></div>
 <input type="file" id="photo-file" accept="image/*" hidden>
 <input type="file" id="food-file" accept="image/*" hidden>
+<input type="file" id="backup-file" accept="application/json,.json" hidden>
 
 <script>
 /* ==================================================================
@@ -316,6 +325,51 @@ const WORKOUT_XP = {perMinute:1, perSet:3, maxPerWorkout:150, minMinutes:5};
 const WORKOUT_TYPES = ["Strength","Cardio","HIIT","Mobility","Sport"];
 const REST_OPTIONS = [0,30,60,90,120,180];   // seconds; 0 = off
 
+/* Owluxe Pro (paid tier). checkoutUrl = your Stripe Payment Link (or any checkout page).
+   codeHashes = SHA-256 of each unlock code, written as UPPERCASE letters and numbers only. */
+const PREMIUM = {
+  price: "$4.99 / month",
+  checkoutUrl: "",
+  codeHashes: ["c0704e4b9c243abe60e8576076ea9005c60ba820a356c2e8441b0ee1394042b8"],
+};
+const FREE_ROUTINES = 2;   // saved routines on the free plan
+
+/* Programs. day(n) returns that day's tasks as [English, Spanish, category, XP]. */
+const PROGRAMS = [
+  {id:"reset30", n:"30-Day Owluxe Reset", nes:"Reinicio Owluxe de 30 días", days:30, xp:300, premium:false,
+   d:"Rebuild the basics: move daily, sleep on time, eat clean, stay sharp. 3 tasks a day.",
+   des:"Reconstruye lo básico: muévete a diario, duerme a tiempo, come limpio y mantente enfocado. 3 tareas al día.",
+   day:i=>{const P=[["Walk 30 minutes","Camina 30 minutos"],["20 minutes of mobility","20 minutos de movilidad"],["Bodyweight circuit: 3 rounds of 10 squats, 10 push-ups, 20 s plank","Circuito con tu peso: 3 rondas de 10 sentadillas, 10 lagartijas y 20 s de plancha"],["Walk 45 minutes","Camina 45 minutos"],["Stretch 15 minutes before bed","Estira 15 minutos antes de dormir"]],
+     Q=[["In bed by 10:30 pm","En la cama antes de las 10:30 pm"],["No phone for the first hour awake","Sin celular la primera hora despierto"],["No sugar or junk food today","Hoy sin azúcar ni comida chatarra"],["Drink 3 liters of water","Toma 3 litros de agua"],["Make your bed right after waking","Tiende la cama al despertar"]],
+     M=[["Write 3 wins from today","Escribe 3 logros de hoy"],["10 minutes of meditation","10 minutos de meditación"],["Read 20 pages","Lee 20 páginas"],["Plan tomorrow in 5 minutes","Planea mañana en 5 minutos"],["Message someone you appreciate","Escríbele a alguien que aprecias"]];
+     return [[...P[(i-1)%5],"physical",20],[...Q[(i+1)%5],"discipline",20],[...M[(i+2)%5],"mind",15]];}},
+  {id:"mindset21", n:"21-Day Mindset", nes:"Mentalidad en 21 días", days:21, xp:200, premium:false,
+   d:"Train your focus and confidence with 2 short mind tasks a day.",
+   des:"Entrena tu enfoque y confianza con 2 tareas mentales cortas al día.",
+   day:i=>{const M=[["Journal for 10 minutes","Escribe en tu diario 10 minutos"],["Read 20 pages","Lee 20 páginas"],["10 minutes of breathwork","10 minutos de respiración"],["Write your top 3 goals","Escribe tus 3 metas principales"],["No social media until noon","Sin redes sociales hasta el mediodía"],["Do one thing you've been avoiding","Haz algo que has estado evitando"],["Visualize tomorrow for 5 minutes","Visualiza mañana por 5 minutos"]];
+     return [[...M[(i-1)%7],"mind",20],[...M[(i+2)%7],"mind",15]];}},
+  {id:"strength8", n:"8-Week Strength Builder", nes:"Fuerza en 8 semanas", days:56, xp:500, premium:true,
+   d:"3 lifting days a week with recovery and conditioning. The work gets heavier as the weeks go.",
+   des:"3 días de pesas por semana con recuperación y acondicionamiento. La carga sube semana a semana.",
+   day:i=>{const w=Math.ceil(i/7),dw=(i-1)%7,sc=w<=2?"3 x 10":w<=4?"4 x 8":w<=6?"4 x 6":"5 x 5";
+     const log=["Log your session in the Train tab","Registra tu sesión en Entrenar","discipline",10],eat=["Eat a protein-rich meal","Come una comida rica en proteína","discipline",10];
+     if(dw===0)return [[`Week ${w} lower body: ${sc} squats + 3 x 8 Romanian deadlifts`,`Semana ${w} piernas: ${sc} sentadillas + 3 x 8 peso muerto rumano`,"physical",35],log];
+     if(dw===2)return [[`Week ${w} upper body: ${sc} bench press + ${sc} rows + 3 sets of max pull-ups`,`Semana ${w} torso: ${sc} press de banca + ${sc} remos + 3 series de dominadas al máximo`,"physical",35],log];
+     if(dw===4)return [[`Week ${w} full body: ${sc} deadlifts + 3 x 10 overhead press + 4 rounds of farmer's carry`,`Semana ${w} cuerpo completo: ${sc} peso muerto + 3 x 10 press militar + 4 rondas de paseo del granjero`,"physical",35],log];
+     if(dw===5)return [["Conditioning: 10 rounds of 30 s hard, 30 s easy","Acondicionamiento: 10 rondas de 30 s fuerte y 30 s suave","physical",20],eat];
+     if(dw===6)return [["Rest day: sleep 8 hours","Día de descanso: duerme 8 horas","discipline",15],eat];
+     return [["Active recovery: 20-minute walk + 10 minutes of mobility","Recuperación activa: caminata de 20 minutos + 10 minutos de movilidad","physical",20],eat];}},
+  {id:"run5k", n:"5K in 6 Weeks", nes:"5K en 6 semanas", days:42, xp:400, premium:true,
+   d:"From run-walk intervals to running a full 5K, with 3 runs a week.",
+   des:"De intervalos de correr y caminar a correr 5K completos, con 3 carreras por semana.",
+   day:i=>{const w=Math.ceil(i/7),dw=(i-1)%7,st=["Stretch calves and hips for 5 minutes","Estira pantorrillas y caderas 5 minutos","physical",10];
+     const R=[["Run 1 min, walk 90 s, repeat 8 times","Corre 1 min, camina 90 s, repite 8 veces"],["Run 2 min, walk 2 min, repeat 6 times","Corre 2 min, camina 2 min, repite 6 veces"],["Run 3 min, walk 2 min, repeat 5 times","Corre 3 min, camina 2 min, repite 5 veces"],["Run 5 min, walk 2 min, repeat 4 times","Corre 5 min, camina 2 min, repite 4 veces"],["Run 8 min, walk 2 min, repeat 3 times","Corre 8 min, camina 2 min, repite 3 veces"],["Run 25 minutes without stopping","Corre 25 minutos sin parar"]];
+     if(i===40)return [["Race day: run your 5K","Día de carrera: corre tus 5K","physical",60],st];
+     if(dw===0||dw===2||dw===4)return [[...R[Math.min(w,6)-1],"physical",30],st];
+     if(dw===6)return [["Rest and stretch for 10 minutes","Descansa y estira 10 minutos","discipline",10]];
+     return [["Walk 30 minutes or cross-train","Camina 30 minutos o haz otro deporte","physical",15],st];}},
+];
+
 /* Common foods for autofill: [name, serving, calories, protein g, carbs g, fat g] */
 const FOODS = [
   ["Egg, large","1 egg",72,6,0,5],["Egg whites","3 tbsp",25,5,0,0],["Chicken breast, cooked","4 oz",187,35,0,4],["Chicken thigh, cooked","4 oz",230,28,0,13],
@@ -387,7 +441,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:""});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark"});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -395,6 +449,81 @@ try{
   else{ const old=localStorage.getItem("owluxe.v1"); if(old){const o=JSON.parse(old); S.journal=o.journal||[];
     for(const [d,ids] of Object.entries(o.days||{})){S.days[d]={};ids.forEach(i=>{const c=CHALLENGES[i];if(c)S.days[d]["c"+i]=[c.xp,c.cat];});}}}
 }catch(e){}
+/* ---------- language ---------- */
+let LANG=S.lang||((navigator.language||"").toLowerCase().startsWith("es")?"es":"en");
+const L=()=>LANG==="es"?"es-CR":undefined;
+const ES={
+"Today":"Hoy","Train":"Entrenar","Stats":"Progreso","Crew":"Crew","Journal":"Diario","Profile":"Perfil",
+"Today's Work":"El trabajo de hoy","Owluxe Events":"Eventos Owluxe","Pick your focus":"Elige tu enfoque","Your focus adds a daily 2× bonus challenge. You can change it any time in Profile.":"Tu enfoque suma un reto diario con bono 2×. Puedes cambiarlo cuando quieras en Perfil.",
+"Rank":"Rango","LEVEL":"NIVEL","Start workout":"Empezar entreno","Resume":"Continuar","My habit":"Mi hábito","Owluxe event":"Evento Owluxe","Program":"Programa",
+"Physical":"Físico","Mind":"Mente","Social":"Social","Discipline":"Disciplina","day streak":"días de racha","today":"hoy",
+"Your Stats":"Tu progreso","Streak":"Racha","Best":"Mejor","Done":"Hechos","Last 7 days":"Últimos 7 días","Dashed = freeze used":"Punteado = comodín usado","XP by category":"XP por categoría",
+"Calendar":"Calendario","Weekly Recap":"Resumen semanal","Save image":"Guardar imagen","A story-sized card of your week, ready to post. It updates as you complete challenges.":"Una tarjeta de tu semana lista para historias. Se actualiza cuando completas retos.",
+"Goal hit":"Meta cumplida","Partial":"Parcial","Freeze":"Comodín","Workout":"Entreno","Completed":"Completado","Freeze used":"Comodín usado","Nothing logged yet today.":"Aún no hay nada registrado hoy.","Nothing logged this day.":"No hay nada registrado este día.",
+"Leaderboard":"Clasificación","This week":"Esta semana","All time":"Histórico","People":"Personas","Crew Standings":"Ranking de crews","Your crew":"Tu crew","No crew":"Sin crew","Crew leaderboards are coming soon.":"Las clasificaciones de crews llegan pronto.",
+"Night Journal":"Diario nocturno","Entries":"Notas","Food":"Comida","Progress":"Progreso","Tonight's prompt":"La pregunta de hoy","Your entry":"Tu nota","Save entry":"Guardar nota","Past entries":"Notas anteriores","No entries yet. Your first one will show up here.":"Aún no hay notas. La primera aparecerá aquí.",
+"New check-in":"Nuevo registro","Add photo":"Agregar foto","Change photo":"Cambiar foto","Save check-in":"Guardar registro","Then and now":"Antes y ahora","All check-ins":"Todos los registros","Delete":"Borrar","Confirm":"Confirmar","Tap to confirm":"Toca para confirmar",
+"Private to you. Only you can see your photos and weight, never your crew or the app owner.":"Solo para ti. Solo tú ves tus fotos y tu peso; ni tu crew ni el dueño de la app.",
+"Protein":"Proteína","Carbs":"Carbohidratos","Fat":"Grasa","Scan a meal":"Escanear una comida","Take or choose a photo":"Tomar o elegir una foto","Analyze":"Analizar","Log this meal":"Registrar comida","Discard":"Descartar","Add by hand":"Agregar a mano","Recent":"Recientes","Servings":"Porciones","Estimate with AI":"Estimar con IA","Add to log":"Agregar al registro","Today's log":"Registro de hoy","Save":"Guardar","Daily calorie target (optional)":"Meta diaria de calorías (opcional)",
+"Nothing logged today. Snap a photo of your next meal.":"Nada registrado hoy. Tómale foto a tu próxima comida.","Photo estimates can be off by 20% or more, especially for oils, sauces and portion size. Check food labels when you have them.":"Las estimaciones por foto pueden fallar un 20% o más, sobre todo con aceites, salsas y porciones. Revisa las etiquetas cuando las tengas.",
+"AI photo scanning works in the Owluxe app on claude.ai. You can still add food by hand below.":"El escaneo con IA funciona en la app Owluxe en claude.ai. Puedes agregar comida a mano abajo.",
+"Your Focus":"Tu enfoque","My Habits":"Mis hábitos","Invite Friends":"Invita amigos","Rewards":"Recompensas","Prestige Ranks":"Rangos Prestige","Settings":"Ajustes","Copy":"Copiar","Locked":"Bloqueado","Unlocked":"Desbloqueado","Current rank":"Rango actual","Remove":"Quitar","Add":"Agregar","New habit":"Nuevo hábito","Reset progress":"Reiniciar progreso",
+"Unlock real Owluxe rewards as you rank up.":"Desbloquea premios reales de Owluxe al subir de rango.","Adds a daily 2× bonus challenge from that plan.":"Suma un reto diario con bono 2× de ese plan.",
+"Copy invite":"Copiar invitación","Your invite code":"Tu código de invitación","Friends joined":"Amigos unidos","XP earned":"XP ganada","Next reward":"Siguiente premio","Join":"Unirme","Got a friend's code?":"¿Tienes el código de un amigo?","Invites are coming soon.":"Las invitaciones llegan pronto.",
+"Workout type":"Tipo de entreno","Exercise Library":"Biblioteca de ejercicios","History":"Historial","Workout in progress":"Entreno en curso","Sets done":"Series hechas","XP so far":"XP hasta ahora","Rest timer":"Descanso","+ Add set":"+ Agregar serie","+ Add exercise":"+ Agregar ejercicio","Finish workout":"Terminar entreno","Rest":"Descanso","Skip":"Saltar","Workout complete":"Entreno completo","Time":"Tiempo","Sets":"Series","Close":"Cerrar","All":"Todos","Discard":"Descartar","Tap again to discard":"Toca otra vez para descartar","Tap to remove":"Toca para quitar",
+"Chest":"Pecho","Back":"Espalda","Legs":"Piernas","Shoulders":"Hombros","Arms":"Brazos","Core":"Core","Full body":"Cuerpo completo","Cardio":"Cardio","Mobility":"Movilidad","Strength":"Fuerza","Sport":"Deporte","HIIT":"HIIT","Off":"No",
+"Start":"Iniciar","Set length":"Duración de serie","Per rep":"Por repetición","Get ready":"Prepárate","Keep going":"Sigue","Almost there":"Ya casi","End set now":"Terminar serie","Cancel":"Cancelar","Stop and log reps":"Parar y registrar","Counts down, then marks the set done":"Cuenta regresiva y marca la serie como hecha","reps, one beep per rep":"repeticiones, un pitido por repetición",
+"No workouts yet. Start one above, or pick a move from the library.":"Aún no hay entrenos. Empieza uno arriba o elige un ejercicio de la biblioteca.","Add your first exercise from the library below.":"Agrega tu primer ejercicio de la biblioteca de abajo.",
+"Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
+"My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
+"Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
+"Get Pro":"Obtener Pro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
+"Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
+"Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
+"Progress, photos and journal are saved on this device and browser only.":"El progreso, las fotos y el diario se guardan solo en este dispositivo y navegador.","Reset keeps your progress photos.":"Reiniciar conserva tus fotos de progreso.",
+"10% off your next Owluxe order":"10% de descuento en tu próximo pedido Owluxe","15% off plus free shipping":"15% de descuento más envío gratis","Early access to new drops":"Acceso anticipado a nuevos lanzamientos","Free Owluxe training tee":"Camiseta de entreno Owluxe gratis","25% off any order":"25% de descuento en cualquier pedido","Diamond Eye member kit":"Kit de miembro Diamond Eye","Free shipping for a month":"Envío gratis por un mes","Owluxe Prestige hoodie":"Sudadera Owluxe Prestige",
+"Streak secured for today":"Racha asegurada por hoy","Check-in saved":"Registro guardado","Entry saved":"Nota guardada","Routine saved":"Rutina guardada","Backup restored":"Respaldo restaurado","Backup downloaded":"Respaldo descargado","Pro unlocked. Welcome to Owluxe Pro":"Pro desbloqueado. Bienvenido a Owluxe Pro","That code didn't work. Check it and try again.":"Ese código no funcionó. Revísalo e inténtalo otra vez.",
+"Write a few honest lines…":"Escribe unas líneas honestas…","Search by name, muscle or equipment":"Busca por nombre, músculo o equipo","Search exercises":"Buscar ejercicios","Type a food, e.g. banana or 2 eggs and toast":"Escribe una comida, ej. banano o 2 huevos con tostada","Name it, optional (e.g. Push day)":"Ponle nombre, opcional (ej. Día de empuje)","e.g. Stretch for 10 minutes after work":"ej. Estirar 10 minutos después del trabajo",
+"50 push-ups, any sets":"50 lagartijas, en las series que quieras","Walk 8,000 steps":"Camina 8.000 pasos","20 minutes of mobility or stretching":"20 minutos de movilidad o estiramiento","Cold shower for 2 minutes":"Ducha fría de 2 minutos","Drink 3 liters of water":"Toma 3 litros de agua","Full workout, 45 minutes":"Entreno completo, 45 minutos",
+"Read 20 pages of a book":"Lee 20 páginas de un libro","10 minutes of silent meditation":"10 minutos de meditación en silencio","Write 3 things you're grateful for":"Escribe 3 cosas por las que estás agradecido","Learn one new skill for 30 minutes":"Aprende una habilidad nueva por 30 minutos","No news or doomscrolling today":"Hoy nada de noticias ni scroll infinito",
+"Start a conversation with someone new":"Empieza una conversación con alguien nuevo","Call a family member, no texting":"Llama a un familiar, sin mensajes","Give someone a genuine compliment":"Dale a alguien un cumplido sincero","Train with a friend or invite one":"Entrena con un amigo o invita a uno","Plan something with a friend this week":"Planea algo con un amigo esta semana",
+"Make your bed within 10 minutes of waking":"Tiende la cama en los 10 minutos después de despertar","Phone off by 10:30 pm":"Celular apagado antes de las 10:30 pm","No social media until noon":"Sin redes sociales hasta el mediodía","Finish your hardest task first":"Termina primero tu tarea más difícil","No sugar or junk food today":"Hoy sin azúcar ni comida chatarra","Lay out tomorrow's clothes and plan tonight":"Deja lista la ropa de mañana y planea esta noche",
+"5 x 5 squats at a heavy weight":"Sentadillas 5 x 5 con peso pesado","100 push-ups through the day":"100 lagartijas durante el día","3 sets of max pull-ups":"3 series de dominadas al máximo","Farmer's carry, 5 rounds":"Paseo del granjero, 5 rondas","Core circuit: 3 rounds plank and hollow hold":"Circuito de core: 3 rondas de plancha y hollow hold",
+"Run 5 km at an easy pace":"Corre 5 km a ritmo suave","6 x 400 m intervals":"Intervalos de 6 x 400 m","30-minute tempo run":"Carrera tempo de 30 minutos","Hill sprints, 8 reps":"Sprints en cuesta, 8 repeticiones","Run 20 minutes before breakfast":"Corre 20 minutos antes del desayuno",
+"Journal for 15 minutes":"Escribe en tu diario 15 minutos","Read 30 pages":"Lee 30 páginas","20 minutes of breathwork":"20 minutos de respiración consciente","Write down your top 3 goals":"Escribe tus 3 metas principales","Visualize tomorrow's wins for 5 minutes":"Visualiza los logros de mañana por 5 minutos",
+"No phone for the first hour awake":"Sin celular la primera hora despierto","In bed by 10:30 pm":"En la cama antes de las 10:30 pm","Cook a whole-food meal":"Cocina una comida con alimentos naturales","Clean and reset your space":"Limpia y ordena tu espacio","No alcohol today":"Hoy sin alcohol",
+"What did you do today that the old you would have skipped?":"¿Qué hiciste hoy que tu versión anterior se habría saltado?","Where did you hold back today, and why?":"¿En qué te contuviste hoy y por qué?","What's one win you can stack on tomorrow?":"¿Qué logro puedes sumar mañana?","Who did you show up for today?":"¿Por quién diste la cara hoy?","What drained you today, and what will you cut?":"¿Qué te desgastó hoy y qué vas a cortar?","What would make tomorrow a 10 out of 10?":"¿Qué haría de mañana un 10 de 10?","What are you proud of that nobody saw?":"¿De qué estás orgulloso que nadie vio?",
+"Discipline equals freedom.":"La disciplina es libertad.","Hard work beats talent when talent doesn't work hard.":"El trabajo duro vence al talento cuando el talento no trabaja duro.","Waste no more time arguing about what a good man should be. Be one.":"No pierdas más tiempo discutiendo cómo debe ser un buen hombre. Sé uno.",
+"First say to yourself what you would be; and then do what you have to do.":"Primero dite a ti mismo qué quieres ser; luego haz lo que tengas que hacer.","No man is free who is not master of himself.":"Ningún hombre es libre si no es dueño de sí mismo.","Difficulties strengthen the mind, as labor does the body.":"Las dificultades fortalecen la mente, como el trabajo fortalece el cuerpo.",
+"He who has a why to live can bear almost any how.":"Quien tiene un porqué para vivir puede soportar casi cualquier cómo.","We are what we repeatedly do. Excellence, then, is not an act, but a habit.":"Somos lo que hacemos repetidamente. La excelencia, entonces, no es un acto, sino un hábito.","Everybody has a plan until they get punched in the mouth.":"Todos tienen un plan hasta que reciben un golpe en la boca.",
+"You miss 100% of the shots you don't take.":"Fallas el 100% de los tiros que no haces.","I've failed over and over and over again in my life. And that is why I succeed.":"He fallado una y otra y otra vez en mi vida. Y por eso tengo éxito.","Champions keep playing until they get it right.":"Los campeones siguen jugando hasta hacerlo bien.",
+"Don't quit. Suffer now and live the rest of your life as a champion.":"No te rindas. Sufre ahora y vive el resto de tu vida como un campeón.","Success is no accident. It is hard work, perseverance, learning, studying, sacrifice.":"El éxito no es casualidad. Es trabajo duro, perseverancia, aprendizaje, estudio y sacrificio.","Well done is better than well said.":"Bien hecho es mejor que bien dicho.",
+"It does not matter how slowly you go as long as you do not stop.":"No importa lo lento que vayas, siempre que no te detengas.","The man who moves a mountain begins by carrying away small stones.":"El hombre que mueve una montaña empieza cargando piedras pequeñas.","It always seems impossible until it's done.":"Siempre parece imposible hasta que se hace.",
+"Do the hard jobs first. The easy jobs will take care of themselves.":"Haz primero lo difícil. Lo fácil se resolverá solo.","Whether you think you can, or you think you can't, you're right.":"Tanto si crees que puedes como si crees que no, tienes razón.",
+};
+const ES_RX=[
+ [/^(\d+) freezes? left$/,(m,a)=>`${a} comodín${a==="1"?"":"es"}`],[/^XP to level (\d+)$/,"XP para el nivel $1"],[/^(\d+) of (\d+)$/,"$1 de $2"],
+ [/^Finish (\d+) to keep your streak\. Miss a day and a streak freeze covers it, (\d+) per week\.$/,"Completa $1 para mantener tu racha. Si fallas un día, un comodín te cubre ($2 por semana)."],
+ [/^Check in on the day for \+(\d+) XP$/,"Haz check-in ese día y gana +$1 XP"],[/^Log a workout for up to (\d+) XP$/,"Registra un entreno y gana hasta $1 XP"],[/^Workout in progress ·$/,"Entreno en curso ·"],
+ [/^2× (.+)$/,(m,a)=>"2× "+tr(a)],[/^Start (\w+) workout$/,(m,a)=>"Empezar entreno de "+tr(a).toLowerCase()],[/^(\d+) logged$/,"$1 registrados"],
+ [/^Reach level (\d+)$/,"Llega al nivel $1"],[/^Hit a (\d+)-day streak$/,"Logra una racha de $1 días"],[/^Invite (\d+) friends who join$/,"Invita a $1 amigos que se unan"],
+ [/^Day (\d+) of (\d+)$/,"Día $1 de $2"],[/^(\d+) days$/,"$1 días"],[/^(\d+) this week$/,"$1 esta semana"],[/^(\d+) goal days ·$/,"$1 días con meta ·"],[/^XP this month$/,"XP este mes"],
+ [/^Free plan: (\d+) of (\d+) routines\. Pro removes the limit\.$/,"Plan gratis: $1 de $2 rutinas. Pro quita el límite."],[/^(.+) · (\d+) exercises$/,(m,a,b)=>`${tr(a)} · ${b} ejercicios`],
+ [/^— attributed to (.+)$/,"— atribuida a $1"],[/^Workout saved, \+(\d+) XP$/,"Entreno guardado, +$1 XP"],[/^Logged (\d+) kcal$/,"Registrado: $1 kcal"],[/^(.+) added$/,(m,a)=>`${a} agregado`],
+ [/^Showing (\d+) of (\d+)\. Search to narrow it down\.$/,"Mostrando $1 de $2. Busca para filtrar."],[/^Show more \((\d+)\)$/,"Ver más ($1)"],[/^(\d+) moves$/,"$1 ejercicios"],
+ [/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
+];
+function tr(s){if(LANG!=="es"||!s)return s;const k=s.trim();if(!k)return s;if(ES[k]!=null)return s.replace(k,ES[k]);for(const [r,f] of ES_RX){if(r.test(k))return s.replace(k,k.replace(r,f));}return s;}
+function trTree(root){if(LANG!=="es"||!root)return;if(root.nodeType===3){const v=root.nodeValue,n=tr(v);if(n!==v)root.nodeValue=n;return;}if(root.nodeType!==1)return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),list=[];let n;while((n=w.nextNode()))list.push(n);
+  for(const x of list){const pe=x.parentElement;if(pe&&pe.closest("script,style,textarea,[data-notr]"))continue;const v=x.nodeValue,nv=tr(v);if(nv!==v)x.nodeValue=nv;}
+  const els=root.querySelectorAll?[root,...root.querySelectorAll("[placeholder],[aria-label],[title]")]:[];
+  for(const el of els){if(!el.getAttribute)continue;for(const a of ["placeholder","aria-label","title"]){const v=el.getAttribute(a);if(v){const nv=tr(v);if(nv!==v)el.setAttribute(a,nv);}}}}
+new MutationObserver(ms=>{if(LANG!=="es")return;for(const m of ms){if(m.type==="characterData")trTree(m.target);else m.addedNodes.forEach(trTree);}}).observe(document.body,{childList:true,subtree:true,characterData:true});
+function applyTheme(){document.body.classList.toggle("light",S.theme==="light");const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute("content",S.theme==="light"?"#f4f2e6":"#000000");document.documentElement.lang=LANG;}
+function track(path){try{if(STANDALONE&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"event/"+path,title:path,event:true});}catch(e){}}
+
 let localPhotos=[]; try{localPhotos=JSON.parse(localStorage.getItem(KEY+".photos")||"[]");}catch(e){}
 
 /* ---------- dates ---------- */
@@ -403,7 +532,7 @@ const TODAY=iso(new Date());
 const D=s=>new Date(s+"T12:00");
 const addDays=(s,n)=>{const d=D(s);d.setDate(d.getDate()+n);return iso(d);};
 const weekStart=s=>{const d=D(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d);};
-const fmt=(s,o)=>D(s).toLocaleDateString(undefined,o);
+const fmt=(s,o)=>D(s).toLocaleDateString(L(),o);
 
 /* ---------- daily list ---------- */
 function rng(seed){let h=2166136261;for(const ch of seed)h=Math.imul(h^ch.charCodeAt(0),16777619);return()=>{h=Math.imul(h^h>>>15,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296;};}
@@ -415,6 +544,7 @@ function dailyFor(date){
   if(f&&f.pool.length){const j=Math.floor(r()*f.pool.length);const b=f.pool[j];out.push({...b,xp:b.xp*2,bonus:f.n,key:`f:${S.focus}:${j}`});}
   else{const rest=base.filter(c=>!out.some(o=>o.key===c.key));if(rest.length){const b=rest[Math.floor(r()*rest.length)];out.push({...b,xp:b.xp*2,bonus:"Bonus",key:b.key});}}
   S.custom.forEach(c=>out.push({cat:c.cat,t:c.t,xp:CUSTOM_XP,custom:true,key:"u:"+c.id}));
+  progTasks(date).forEach(x=>out.push(x));
   EVENTS.filter(e=>e.date===date).forEach(e=>out.push({cat:"social",t:"Attend: "+e.t,xp:e.xp,event:true,key:"e:"+e.id}));
   return out;
 }
@@ -470,6 +600,8 @@ function mergeState(a,b){
   m.active=a.active||b.active||null;
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
+  const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";
   return m;
 }
 async function boot(){
@@ -509,7 +641,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2200);}
 const head=(n,t,right="")=>`<div class="sec-head"><div><span class="idx">( ${String(n).padStart(2,"0")} )</span><h2>${t}</h2></div>${right}</div>`;
 const ICONS={
-  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4 10-10"/></svg>',
+  today:'<svg viewBox="0 0 100 100" fill="currentColor"><path d="M6 12 C40 20 66 34 76 48 L72 22 C88 40 96 64 94 90 C86 66 72 50 52 38 C66 46 72 54 74 60 C60 52 40 40 6 12Z"/><path d="M40 40 C26 46 22 64 32 74 C40 82 56 82 66 74 C54 78 42 74 38 64 C35 56 36 48 40 40Z"/><path d="M48 56 C46 64 50 70 58 70 L62 66 C56 64 50 60 48 56Z"/></svg>',
   stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>',
   crew:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14c2.6 0 4.4 1.5 5 4"/></svg>',
   train:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/></svg>',
@@ -526,7 +658,7 @@ function crest(){
   return `<section class="crest">
     <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .6s ease"/></svg>
       <div class="lv"><div><small>LEVEL</small><b>${lv}</b></div></div></div>
-    <div class="crest-info"><span class="label">Rank</span>
+    <div class="crest-info"><span class="label"><span>Rank</span>${isPro()?' · <span style="color:var(--gold-2)">PRO</span>':""}</span>
       <div class="row" style="flex-wrap:nowrap">${badge(ti,44)}<div class="rank">${TIERS[ti][0]}</div></div>
       <div class="xpline"><span class="num">${xp-a}</span> / <span class="num">${b-a}</span> XP to level ${lv+1}</div>
       <div class="chips"><span class="chip ${st?"hot":""}"><span class="num">${st}</span> day streak</span><span class="chip"><span class="num">${Math.min(done,DAILY_GOAL)}/${DAILY_GOAL}</span> today</span><span class="chip" title="Missed days forgiven this week">${freezesLeft()} freeze${freezesLeft()===1?"":"s"} left</span></div></div>
@@ -545,9 +677,10 @@ function viewToday(){
       <div class="progress"><i style="width:${list.length?done/list.length*100:0}%"></i></div>
       <div class="list">${list.map(c=>`<button class="task ${m[c.key]?"done":""}" data-key="${esc(c.key)}" aria-pressed="${!!m[c.key]}">
         <span class="check"><svg viewBox="0 0 16 16" fill="none" stroke="var(--on-gold)" stroke-width="2.5"><path d="M3 8.5l3 3 7-7"/></svg></span>
-        <span class="t-body"><span class="t-title">${esc(c.t)}</span><span class="t-meta"><span class="dot" style="--c:var(${CATS[c.cat].c})"></span>${CATS[c.cat].n}${c.bonus?` <span class="tag">2× ${esc(c.bonus)}</span>`:""}${c.custom?' <span class="tag">My habit</span>':""}${c.event?' <span class="tag">Owluxe event</span>':""}</span></span>
+        <span class="t-body"><span class="t-title">${esc(c.t)}</span><span class="t-meta"><span class="dot" style="--c:var(${CATS[c.cat].c})"></span>${CATS[c.cat].n}${c.bonus?` <span class="tag">2× ${esc(c.bonus)}</span>`:""}${c.custom?' <span class="tag">My habit</span>':""}${c.event?' <span class="tag">Owluxe event</span>':""}${c.program?' <span class="tag">Program</span>':""}</span></span>
         <span class="xp">+${c.xp}</span></button>`).join("")}</div>
       <p class="empty">Finish ${DAILY_GOAL} to keep your streak. Miss a day and a streak freeze covers it, ${FREEZES_PER_WEEK} per week.</p></section>
+    ${progCard()}
     <section class="card"><div class="spread"><div style="min-width:0"><span class="label">Train</span><p>${S.active?`Workout in progress · <span class="num">${clock((Date.now()-S.active.start)/1000)}</span>`:`Log a workout for up to ${WORKOUT_XP.maxPerWorkout} XP`}</p></div><button class="btn sm" data-tab="train">${S.active?"Resume":"Start workout"}</button></div>
       ${(S.workouts||[]).filter(w=>w.date===TODAY).map(w=>`<div class="entry"><div class="spread"><span>${esc(w.name||w.type)} · ${clock(w.dur)} · ${w.sets} sets</span><span class="xp">+${w.xp} XP</span></div></div>`).join("")}</section>
     ${upcoming.length?`<section class="sec">${head(2,"Owluxe Events")}<div class="card">${upcoming.map(e=>`<div class="event"><div class="cal"><span>${fmt(e.date,{month:"short"})}</span><b>${D(e.date).getDate()}</b></div><div style="min-width:0"><b style="font-weight:500">${esc(e.t)}</b><p class="small muted">${esc(fmt(e.date,{weekday:"long"}))} · ${esc(e.time)} · ${esc(e.place)}</p><p class="small" style="color:var(--gold-2)">Check in on the day for +${e.xp} XP</p></div></div>`).join("")}</div></section>`:""}`;
@@ -602,7 +735,7 @@ function weightChart(ps){
   const line=pts.map((p,i)=>`${i?"L":"M"}${X(xs[i]).toFixed(1)} ${Y(ys[i]).toFixed(1)}`).join(" ");
   const area=line+` L${X(xs[xs.length-1]).toFixed(1)} ${H-B} L${X(xs[0]).toFixed(1)} ${H-B}Z`;
   const ticks=[lo,(lo+hi)/2,hi];
-  const dl=d=>new Date(d).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  const dl=d=>new Date(d).toLocaleDateString(L(),{month:"short",day:"numeric"});
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over time">
     <defs><linearGradient id="wa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)" stop-opacity=".35"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
     ${ticks.map(t=>`<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(t)+4}" fill="var(--muted)" font-size="10" text-anchor="end" font-family="Jost,sans-serif">${Math.round(t)}</text>`).join("")}
@@ -621,10 +754,10 @@ function viewJournal(){
     <div class="card"><span class="label">Tonight's prompt</span><div class="prompt">${p}</div>
       <label for="jtext" class="label">Your entry</label><textarea id="jtext" placeholder="Write a few honest lines…"></textarea>
       <button class="btn" id="jsave" style="align-self:flex-start">Save entry</button></div>
-    <div class="card"><span class="label">Past entries</span>${S.journal.length?S.journal.slice().reverse().map(e=>`<div class="entry"><span class="label">${new Date(e.d).toLocaleDateString(undefined,{month:"short",day:"numeric"})} · ${esc(e.p)}</span><p>${esc(e.t)}</p></div>`).join(""):'<p class="empty">No entries yet. Your first one will show up here.</p>'}</div></section>`;
+    <div class="card"><span class="label">Past entries</span>${S.journal.length?S.journal.slice().reverse().map(e=>`<div class="entry"><span class="label">${new Date(e.d).toLocaleDateString(L(),{month:"short",day:"numeric"})} · ${esc(e.p)}</span><p>${esc(e.t)}</p></div>`).join(""):'<p class="empty">No entries yet. Your first one will show up here.</p>'}</div></section>`;
   const ps=(photos||[]).slice().sort((a,b)=>a.d-b.d),first=ps[0],last=ps[ps.length-1];
   const wpts=ps.filter(x=>x.w>0),delta=wpts.length>1?(S.unit==="kg"?1:2.20462)*(wpts[wpts.length-1].w-wpts[0].w):null;
-  const dstr=x=>new Date(x.d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+  const dstr=x=>new Date(x.d).toLocaleDateString(L(),{month:"short",day:"numeric",year:"numeric"});
   return `<section class="sec">${head(1,"Progress")}${seg}
     <p class="note">Private to you. Only you can see your photos and weight, never your crew or the app owner.</p>
     <div class="card"><div class="spread"><span class="label">New check-in</span><div class="seg" style="width:120px" role="group" aria-label="Weight unit"><button data-unit="lb" aria-pressed="${S.unit==="lb"}">lb</button><button data-unit="kg" aria-pressed="${S.unit==="kg"}">kg</button></div></div>
@@ -654,11 +787,16 @@ function viewRank(){
       ${S.custom.length?`<div>${S.custom.map(c=>`<div class="entry"><div class="spread"><span><span class="dot" style="--c:var(${CATS[c.cat].c});display:inline-block;margin-right:8px"></span>${esc(c.t)}</span><button class="btn ghost sm" data-rmc="${esc(c.id)}">Remove</button></div></div>`).join("")}</div>`:""}
       ${S.custom.length<MAX_CUSTOM?`<label for="cust-t" class="label">New habit</label><input type="text" id="cust-t" maxlength="60" placeholder="e.g. Stretch for 10 minutes after work">
       <div class="row" style="flex-wrap:nowrap"><select id="cust-c" aria-label="Category">${Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join("")}</select><button class="btn" id="cust-add">Add</button></div>`:`<p class="small muted">You've added the maximum of ${MAX_CUSTOM}.</p>`}</div></section>
-    <section class="sec">${head(3,"Invite Friends")}<div class="card">${referralCard()}</div></section>
-    <section class="sec">${head(4,"Rewards")}<div class="card"><p class="small muted">Unlock real Owluxe rewards as you rank up.</p>
+    <section class="sec">${head(3,"Owluxe Pro")}<div class="card">${proCard()}</div></section>
+    <section class="sec">${head(4,"Invite Friends")}<div class="card">${referralCard()}</div></section>
+    <section class="sec">${head(5,"Rewards")}<div class="card"><p class="small muted">Unlock real Owluxe rewards as you rank up.</p>
       ${REWARDS.map(r=>{const open=rewardOpen(r);return `<div class="reward ${open?"":"locked"}"><div style="min-width:0"><b style="font-weight:500">${esc(r.t)}</b><p class="small muted">${r.lv?`Reach level ${r.lv}`:r.refs?`Invite ${r.refs} friends who join`:`Hit a ${r.streak}-day streak`}</p>${open?`<p style="margin-top:6px"><span class="code">${esc(r.code)}</span></p>`:""}</div>${open?`<button class="btn sm" data-copy="${esc(r.code)}">Copy</button>`:`<span class="small muted">Locked</span>`}</div>`}).join("")}</div></section>
-    <section class="sec">${head(5,"Prestige Ranks")}<div class="card"><div class="tiers">${TIERS.map(([n,l],i)=>`<div class="tier ${i===ti?"on":""}"><span class="row" style="flex-wrap:nowrap;gap:12px">${badge(i,48,lv<l)}<span style="display:flex;flex-direction:column"><b style="color:${lv<l?"var(--muted)":"var(--fg)"}">${n}</b><span style="font-size:12px">${lv>=l?(i===ti?"Current rank":"Unlocked"):"Locked"}</span></span></span><span class="num">Lv ${l}+</span></div>`).join("")}</div></div></section>
-    <section class="sec">${head(6,"Settings")}<div class="card"><p class="small">${syncState==="synced"?"Progress is synced to your claude.ai account, on every device.":(STANDALONE?"Progress, photos and journal are saved on this device and browser only.":"Progress is saved on this device. Sign in to claude.ai to sync it across devices.")}</p>
+    <section class="sec">${head(6,"Prestige Ranks")}<div class="card"><div class="tiers">${TIERS.map(([n,l],i)=>`<div class="tier ${i===ti?"on":""}"><span class="row" style="flex-wrap:nowrap;gap:12px">${badge(i,48,lv<l)}<span style="display:flex;flex-direction:column"><b style="color:${lv<l?"var(--muted)":"var(--fg)"}">${n}</b><span style="font-size:12px">${lv>=l?(i===ti?"Current rank":"Unlocked"):"Locked"}</span></span></span><span class="num">Lv ${l}+</span></div>`).join("")}</div></div></section>
+    <section class="sec">${head(7,"Settings")}<div class="card"><p class="small">${syncState==="synced"?"Progress is synced to your claude.ai account, on every device.":(STANDALONE?"Progress, photos and journal are saved on this device and browser only.":"Progress is saved on this device. Sign in to claude.ai to sync it across devices.")}</p>
+      <div class="spread"><span class="label">Language</span><div class="seg" style="width:160px" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${LANG==="en"}">English</button><button data-lang="es" aria-pressed="${LANG==="es"}">Español</button></div></div>
+      <div class="spread"><span class="label">Appearance</span><div class="seg" style="width:160px" role="group" aria-label="Appearance"><button data-theme-set="dark" aria-pressed="${S.theme!=="light"}">Dark</button><button data-theme-set="light" aria-pressed="${S.theme==="light"}">Light</button></div></div>
+      <div><span class="label">Backup</span><p class="small muted">Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.</p>
+        <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="bk-export">Download backup</button><button class="btn ghost sm" id="bk-import">Restore from backup</button></div></div>
       <button class="btn ghost" id="reset" style="align-self:flex-start">${resetArmed?"Tap again to reset challenges, XP and journal":"Reset progress"}</button><p class="small muted">Reset keeps your progress photos.</p></div></section>`;
 }
 
@@ -734,6 +872,7 @@ function viewTrain(){
       <button class="btn ghost sm" data-addset="${ei}" style="align-self:flex-start">+ Add set</button></section>`).join("")}
     ${!a.ex.length?`<div class="card"><p class="empty">Add your first exercise from the library below.</p></div>`:""}
     ${exPick||!a.ex.length?library(1):`<button class="btn ghost" id="wo-pick">+ Add exercise</button>`}
+    <button class="btn ghost" id="wo-saveroutine">Save as routine</button>
     <div class="row"><button class="btn" id="wo-finish" style="flex:1">Finish workout</button><button class="btn ghost" id="wo-discard">${discardArmed?"Tap again to discard":"Discard"}</button></div>`;
   }
   const hist=(S.workouts||[]).slice().reverse();
@@ -748,11 +887,14 @@ function viewTrain(){
       <div class="pills scroll" role="group" aria-label="Workout type">${WORKOUT_TYPES.map(t=>`<button class="pill" data-wtype="${t}" aria-pressed="${pendingType===t}">${t}</button>`).join("")}</div>
       <button class="btn" id="wo-start">Start ${esc(pendingType)} workout</button>
       <p class="small muted">The clock runs while you train. Earn ${WORKOUT_XP.perMinute} XP per minute and ${WORKOUT_XP.perSet} XP per set, up to ${WORKOUT_XP.maxPerWorkout} per workout. A finished workout also counts toward your daily streak.</p></div></section>
-    ${library(2)}
-    <section class="sec">${head(3,"History",`<span class="label">${wkList.length} this week</span>`)}<div class="card">
+    ${routinesSection()}
+    ${programsSection()}
+    ${library(4)}
+    ${exProgressSection()}
+    <section class="sec">${head(6,"History",`<span class="label">${wkList.length} this week</span>`)}<div class="card">
       ${hist.length?hist.slice(0,12).map(w=>`<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(w.name||w.type)}</b> <span class="small muted">${fmt(w.date,{weekday:"short",month:"short",day:"numeric"})}</span></span><span class="xp">+${w.xp} XP</span></div>
         <p class="small muted">${w.type} · ${clock(w.dur)} · ${w.sets} sets${w.reps?` · ${w.reps} reps`:""}${w.vol?` · ${Math.round(toU(w.vol)).toLocaleString()} ${S.unit} lifted`:""}</p>
-        <p class="small muted">${w.ex.map(x=>esc(x.n)).join(", ")}</p></div>`).join(""):`<p class="empty">No workouts yet. Start one above, or pick a move from the library.</p>`}</div></section>`;
+        <p class="small muted">${w.ex.map(x=>esc(x.n)).join(", ")}</p><button class="btn ghost sm" data-rsave="${esc(w.id)}" style="align-self:flex-start">Save as routine</button></div>`).join(""):`<p class="empty">No workouts yet. Start one above, or pick a move from the library.</p>`}</div></section>`;
 }
 function startWorkout(first){
   S.active={id:"w"+Date.now().toString(36),start:Date.now(),type:pendingType,name:"",rest:90,ex:[]};
@@ -768,7 +910,7 @@ function finishWorkout(){
   const beforeLv=levelOf(totalXP());
   S.workouts=(S.workouts||[]).concat(W).slice(-60);
   if(xp>0){const day=S.days[date]=S.days[date]||{};day["w:"+a.id]=[xp,"physical"];}
-  S.active=null;restEnd=0;pbCache=null;lastSummary=W;exPick=false;save();releaseWake();beep(1320,200);
+  track("workout");S.active=null;restEnd=0;pbCache=null;lastSummary=W;exPick=false;save();releaseWake();beep(1320,200);
   const afterLv=levelOf(totalXP());toast(afterLv>beforeLv?`Workout saved. Level ${afterLv} reached`:`Workout saved, +${xp} XP`);render();scrollTo(0,0);
 }
 const SET_PRESETS=[20,30,45,60,90,120];
@@ -833,6 +975,8 @@ function itemName(k,date){
   if(k.startsWith("f:")){const [,f,j]=k.split(":");const c=FOCUSES[f]&&FOCUSES[f].pool[+j];return c?c.t+" (2× bonus)":"Focus bonus";}
   if(k.startsWith("u:")){const c=S.custom.find(x=>x.id===k.slice(2));return c?c.t:"Personal habit";}
   if(k.startsWith("e:")){const ev=EVENTS.find(x=>x.id===k.slice(2));return ev?"Attended: "+ev.t:"Owluxe event";}
+  if(k.startsWith("p:")){const [,pid,di,j]=k.split(":");const pr=PROGRAMS.find(x=>x.id===pid);const tk=pr&&pr.day(+di)[+j];return tk?(LANG==="es"?tk[1]:tk[0]):"Program task";}
+  if(k.startsWith("pb:")){const pr=PROGRAMS.find(x=>x.id===k.slice(3));return pr?(LANG==="es"?"Programa completado: ":"Program complete: ")+pn(pr):"Program complete";}
   if(k.startsWith("w:")){const w=(S.workouts||[]).find(x=>x.id===k.slice(2));return w?"Workout: "+(w.name||w.type):"Workout";}
   return "Challenge";
 }
@@ -847,8 +991,8 @@ function calendarSection(){
   const goalDays=Array.from({length:days},(_,i)=>`${calMonth}-${String(i+1).padStart(2,"0")}`).filter(d=>dayCount(d)>=DAILY_GOAL).length;
   const canNext=calMonth<TODAY.slice(0,7);
   return `<section class="sec">${head(2,"Calendar")}
-    <div class="card"><div class="cal-head"><button class="btn ghost sm" data-cal="-1" aria-label="Previous month">‹</button><b>${esc(first.toLocaleDateString(undefined,{month:"long",year:"numeric"}))}</b><button class="btn ghost sm" data-cal="1" aria-label="Next month" ${canNext?"":"disabled"}>›</button></div>
-      <div class="cal-grid">${["M","T","W","T","F","S","S"].map(x=>`<span class="cal-dow">${x}</span>`).join("")}${cells.join("")}</div>
+    <div class="card"><div class="cal-head"><button class="btn ghost sm" data-cal="-1" aria-label="Previous month">‹</button><b>${esc(first.toLocaleDateString(L(),{month:"long",year:"numeric"}))}</b><button class="btn ghost sm" data-cal="1" aria-label="Next month" ${canNext?"":"disabled"}>›</button></div>
+      <div class="cal-grid">${(LANG==="es"?["L","M","M","J","V","S","D"]:["M","T","W","T","F","S","S"]).map(x=>`<span class="cal-dow">${x}</span>`).join("")}${cells.join("")}</div>
       <div class="legend"><span><i style="background:var(--gold)"></i>Goal hit</span><span><i style="background:color-mix(in srgb,var(--gold) 30%,var(--surface-2))"></i>Partial</span><span><i style="border:1px dashed var(--gold-2)"></i>Freeze</span><span><i style="background:var(--gold-2);border-radius:50%;width:6px;height:6px"></i>Workout</span></div>
       <p class="small muted"><span class="num">${goalDays}</span> goal days · <span class="num">${monthXP}</span> XP this month</p></div>
     ${dayDetail(calSel)}</section>`;
@@ -863,7 +1007,7 @@ function dayDetail(d){
     ${keys.length?`<div><span class="label">Completed</span>${keys.map(k=>`<div class="detail-item"><span class="dot" style="--c:var(${(CATS[m[k][1]]||CATS.physical).c})"></span><span>${esc(itemName(k,d))}</span><span class="xp">+${m[k][0]}</span></div>`).join("")}</div>`:""}
     ${wos.map(w=>`<div><span class="label">Workout · ${esc(w.type)}</span><div class="detail-item" style="grid-template-columns:1fr auto"><b style="font-weight:500">${esc(w.name||w.type)} · ${clock(w.dur)}</b><span class="small muted">${w.sets} sets${w.vol?" · "+Math.round(toU(w.vol)).toLocaleString()+" "+S.unit:""}</span></div>
       ${w.ex.map(x=>`<div class="detail-item" style="grid-template-columns:1fr"><span>${esc(x.n)}</span><span class="small muted">${x.sets.map(st=>setTxt(x,st)).join(" · ")}</span></div>`).join("")}</div>`).join("")}
-    ${fd.length?`<div><span class="label">Food · ${ft.cal.toLocaleString()} kcal · P ${ft.p}g · C ${ft.c}g · F ${ft.f}g</span>${fd.map(x=>`<div class="detail-item" style="grid-template-columns:auto 1fr auto"><span class="small muted">${new Date(x.t).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}</span><span>${esc(x.name)}</span><span class="num">${x.cal}</span></div>`).join("")}</div>`:""}
+    ${fd.length?`<div><span class="label">Food · ${ft.cal.toLocaleString()} kcal · P ${ft.p}g · C ${ft.c}g · F ${ft.f}g</span>${fd.map(x=>`<div class="detail-item" style="grid-template-columns:auto 1fr auto"><span class="small muted">${new Date(x.t).toLocaleTimeString(L(),{hour:"numeric",minute:"2-digit"})}</span><span>${esc(x.name)}</span><span class="num">${x.cal}</span></div>`).join("")}</div>`:""}
     ${jr.length?`<div><span class="label">Journal</span>${jr.map(j=>`<div class="entry"><span class="small muted">${esc(j.p)}</span><p>${esc(j.t)}</p></div>`).join("")}</div>`:""}
     ${ph.length?`<div><span class="label">Progress check-in</span><div class="row">${ph.map(x=>`${x.img?`<img src="${x.img}" alt="Check-in photo" style="width:72px;aspect-ratio:3/4;object-fit:cover;border-radius:3px">`:""}${showW(x.w)?`<span class="num">${showW(x.w)}</span>`:""}${x.note?`<span class="small muted">${esc(x.note)}</span>`:""}`).join("")}</div></div>`:""}
   </div>`;
@@ -923,7 +1067,7 @@ const foodDay=d=>(S.food&&S.food[d])||[];
 const foodTotals=d=>foodDay(d).reduce((a,x)=>({cal:a.cal+(x.cal||0),p:a.p+(x.p||0),c:a.c+(x.c||0),f:a.f+(x.f||0)}),{cal:0,p:0,c:0,f:0});
 let foodImg="",foodBlob=null,foodRes=null,foodBusy=false,foodErr="",foodCtl=null,foodDel="";
 function dataURLtoBlob(u){const [h,b]=u.split(","),mime=(h.match(/:(.*?);/)||[])[1]||"image/jpeg",bin=atob(b),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
-function addFood(entry){S.food=S.food||{};(S.food[TODAY]=S.food[TODAY]||[]).push(entry);const cut=addDays(TODAY,-90);for(const d of Object.keys(S.food))if(d<cut)delete S.food[d];save();}
+function addFood(entry){track("food-log");S.food=S.food||{};(S.food[TODAY]=S.food[TODAY]||[]).push(entry);const cut=addDays(TODAY,-90);for(const d of Object.keys(S.food))if(d<cut)delete S.food[d];save();}
 async function scanFood(){
   if(!sampleFn||!foodBlob||foodBusy)return;foodBusy=true;foodErr="";foodRes=null;render();foodCtl=new AbortController();
   const note=($("#food-note")?.value||"").trim().slice(0,200).replace(/"/g,"'");
@@ -971,15 +1115,98 @@ function viewFood(seg){
       ${fmErr?`<p class="small" style="color:var(--warn)">${esc(fmErr)}</p>`:""}
       <button class="btn" id="fm-add" style="align-self:flex-start">Add to log</button></div>
     <div class="card"><span class="label">Today's log</span>
-      ${list.length?list.slice().reverse().map(x=>`<div class="entry"><div class="spread"><span style="min-width:0"><span class="small muted">${new Date(x.t).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}</span> ${esc(x.name)}</span><span class="row" style="flex-wrap:nowrap"><span class="num">${x.cal}</span><button class="btn ghost sm" data-fdel="${esc(x.id)}">${foodDel===x.id?"Confirm":"Delete"}</button></span></div><p class="small muted">P ${x.p||0}g · C ${x.c||0}g · F ${x.f||0}g${x.ai?" · AI estimate":""}</p></div>`).join(""):`<p class="empty">Nothing logged today. Snap a photo of your next meal.</p>`}</div>
+      ${list.length?list.slice().reverse().map(x=>`<div class="entry"><div class="spread"><span style="min-width:0"><span class="small muted">${new Date(x.t).toLocaleTimeString(L(),{hour:"numeric",minute:"2-digit"})}</span> ${esc(x.name)}</span><span class="row" style="flex-wrap:nowrap"><span class="num">${x.cal}</span><button class="btn ghost sm" data-fdel="${esc(x.id)}">${foodDel===x.id?"Confirm":"Delete"}</button></span></div><p class="small muted">P ${x.p||0}g · C ${x.c||0}g · F ${x.f||0}g${x.ai?" · AI estimate":""}</p></div>`).join(""):`<p class="empty">Nothing logged today. Snap a photo of your next meal.</p>`}</div>
     <div class="card"><label for="cal-target" class="label">Daily calorie target (optional)</label>
       <div class="row" style="flex-wrap:nowrap"><input type="number" id="cal-target" inputmode="numeric" min="0" step="50" value="${tgt||""}" placeholder="Leave blank for none"><button class="btn ghost" id="cal-save">Save</button></div></div>
     <p class="note">Photo estimates can be off by 20% or more, especially for oils, sauces and portion size. Check food labels when you have them.</p></section>`;
 }
 
+/* ---------- pro ---------- */
+const isPro=()=>!!S.pro;
+let proMsg="",leaveArmed=false,rDelArmed="",progExName="";
+async function sha256(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+async function tryUnlock(code){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(!code)return false;try{const h=await sha256(code);if(PREMIUM.codeHashes.includes(h)){S.pro=true;save();track("pro-unlock");return true;}}catch(e){}return false;}
+function proCard(){
+  const feats=["All Pro programs, like 8-Week Strength and 5K in 6 Weeks","Unlimited saved routines","Exercise progress charts","PRO badge on your rank card"];
+  if(isPro())return `<p><b style="font-weight:500">Owluxe Pro is active.</b> <span>Thanks for supporting the brand.</span></p><ul class="pro-list">${feats.map(f=>`<li>${f}</li>`).join("")}</ul>`;
+  return `<div class="spread"><span class="prestige" style="font-size:22px">PRO</span><span class="num">${esc(PREMIUM.price)}</span></div>
+    <ul class="pro-list">${feats.map(f=>`<li>${f}</li>`).join("")}</ul>
+    ${PREMIUM.checkoutUrl?`<a class="btn" href="${esc(PREMIUM.checkoutUrl)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;align-self:flex-start">Get Pro</a>`:`<p class="small muted">Checkout is coming soon.</p>`}
+    <label for="pro-in" class="label">Have an unlock code?</label>
+    <div class="row" style="flex-wrap:nowrap"><input type="text" id="pro-in" data-keep autocapitalize="characters" autocomplete="off" placeholder="OWLPRO…" style="text-transform:uppercase"><button class="btn ghost" id="pro-unlock">Unlock</button></div>
+    ${proMsg?`<p class="small" style="color:var(--warn)">${esc(proMsg)}</p>`:""}`;
+}
+
+/* ---------- routines ---------- */
+function routinesSection(){const rs=S.routines||[];
+  return `<section class="sec">${head(2,"My Routines")}<div class="card">${rs.length?rs.map(r=>`<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(r.name)}</b> <span class="small muted">${esc(r.type)} · ${r.ex.length} exercises</span></span><span class="row" style="flex-wrap:nowrap"><button class="btn sm" data-rstart="${esc(r.id)}">Start</button><button class="btn ghost sm" data-rdel="${esc(r.id)}">${rDelArmed===r.id?"Confirm":"Delete"}</button></span></div><p class="small muted">${r.ex.map(x=>esc(x.n)).join(", ")}</p></div>`).join(""):`<p class="empty">Save a workout as a routine to start it again in one tap.</p>`}
+    ${!isPro()?`<p class="small muted">Free plan: ${Math.min(rs.length,FREE_ROUTINES)} of ${FREE_ROUTINES} routines. Pro removes the limit.</p>`:""}</div></section>`;}
+function saveRoutine(name,type,ex){const rs=S.routines=S.routines||[];
+  if(!ex.length){toast(LANG==="es"?"Agrega un ejercicio primero":"Add an exercise first");return false;}
+  if(!isPro()&&rs.length>=FREE_ROUTINES){toast(LANG==="es"?`El plan gratis guarda ${FREE_ROUTINES} rutinas. Pro es ilimitado.`:`The free plan holds ${FREE_ROUTINES} routines. Get Pro for unlimited.`);return false;}
+  rs.push({id:"r"+Date.now().toString(36),name:String(name||type).slice(0,40),type,ex:ex.map(x=>({n:x.n,k:x.k,g:x.g,sets:x.sets.map(st=>{const o={...st};delete o.done;return o;})}))});
+  save();track("routine-save");toast("Routine saved");return true;}
+function startRoutine(r){S.active={id:"w"+Date.now().toString(36),start:Date.now(),type:r.type,name:r.name,rest:90,ex:r.ex.map(x=>({n:x.n,k:x.k,g:x.g,sets:x.sets.map(st=>({...st,done:false}))}))};
+  lastSummary=null;exPick=false;discardArmed=false;save();requestWake();beep(660,80);render();scrollTo(0,0);}
+
+/* ---------- programs ---------- */
+const pn=p=>LANG==="es"?p.nes:p.n, pd=p=>LANG==="es"?p.des:p.d;
+const daysBetween=(a,b)=>Math.round((D(b)-D(a))/864e5);
+const curProg=()=>S.program?PROGRAMS.find(x=>x.id===S.program.id):null;
+const progDay=(date=TODAY)=>S.program?daysBetween(S.program.start,date)+1:0;
+function progTasks(date){const p=curProg();if(!p)return [];const i=progDay(date);if(i<1||i>p.days)return [];
+  return p.day(i).map((t,j)=>({cat:t[2],t:LANG==="es"?t[1]:t[0],xp:t[3],program:true,key:`p:${p.id}:${i}:${j}`}));}
+function checkProgramDone(){const p=curProg();if(!p)return;const i=progDay();if(i!==p.days)return;const ts=progTasks(TODAY),m=dayMap(TODAY);
+  if(ts.length&&ts.every(x=>m[x.key])&&!m["pb:"+p.id]){S.days[TODAY]["pb:"+p.id]=[p.xp,"discipline"];S.progDone[p.id]=TODAY;S.program=null;track("program-done");setTimeout(()=>toast(LANG==="es"?`¡Programa completado! +${p.xp} XP`:`Program complete! +${p.xp} XP`),1200);}}
+function progCard(){const p=curProg();if(!p)return "";const i=progDay();if(i<1||i>p.days)return "";
+  return `<section class="card"><div class="spread"><div style="min-width:0"><span class="label">Program</span><p style="font-weight:500">${esc(pn(p))}</p></div><span class="small muted">Day ${i} of ${p.days}</span></div><div class="progress"><i style="width:${i/p.days*100}%"></i></div></section>`;}
+function programsSection(){const cur=curProg();
+  return `<section class="sec">${head(3,"Programs")}<div class="card">${PROGRAMS.map(p=>{const on=cur&&cur.id===p.id,locked=p.premium&&!isPro(),done=S.progDone&&S.progDone[p.id];
+    return `<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(pn(p))}</b>${p.premium?' <span class="tag">Pro</span>':""}</span><span class="small muted">${p.days} days</span></div><p class="small muted">${esc(pd(p))}</p>
+    ${on?`<div class="row"><span class="small" style="color:var(--gold-2)">Day ${progDay()} of ${p.days}</span><button class="btn ghost sm" data-pleave="1">${leaveArmed?"Tap to leave":"Leave program"}</button></div>`
+      :locked?`<button class="btn ghost sm" data-tab="rank" style="align-self:flex-start">Unlock with Pro</button>`
+      :`<button class="btn sm" data-pstart="${p.id}" style="align-self:flex-start">${done?"Start again":"Start program"}</button>`}</div>`;}).join("")}</div></section>`;}
+
+/* ---------- exercise progress (Pro) ---------- */
+function lineChart(pts,unit){if(pts.length<2)return `<p class="empty">Log an exercise in two or more workouts to see a trend.</p>`;
+  const ys=pts.map(p=>p.y),xs=pts.map(p=>p.x);let lo=Math.min(...ys),hi=Math.max(...ys);const pad=Math.max(1,(hi-lo)*.15);lo=Math.max(0,Math.floor(lo-pad));hi=Math.ceil(hi+pad);
+  const W=320,H=150,Lm=36,R=10,T=10,B=24,x0=xs[0],x1=Math.max(xs[xs.length-1],x0+1),X=v=>Lm+(v-x0)/(x1-x0)*(W-Lm-R),Y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  const line=pts.map((p,i)=>`${i?"L":"M"}${X(p.x).toFixed(1)} ${Y(p.y).toFixed(1)}`).join(" "),area=line+` L${X(xs[xs.length-1]).toFixed(1)} ${H-B} L${X(xs[0]).toFixed(1)} ${H-B}Z`;
+  const dl=d=>new Date(d).toLocaleDateString(L(),{month:"short",day:"numeric"});
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Progress over time"><defs><linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold)" stop-opacity=".35"/><stop offset="1" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+    ${[lo,(lo+hi)/2,hi].map(t=>`<line x1="${Lm}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${Lm-6}" y="${Y(t)+4}" fill="var(--muted)" font-size="10" text-anchor="end" font-family="Jost,sans-serif">${Math.round(t)}</text>`).join("")}
+    <path d="${area}" fill="url(#pa)"/><path d="${line}" fill="none" stroke="var(--gold-2)" stroke-width="2" stroke-linejoin="round"/>
+    ${pts.map((p,i)=>`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${i===pts.length-1?4:2.5}" fill="${i===pts.length-1?"var(--gold-2)":"var(--gold)"}"/>`).join("")}
+    <text x="${Lm}" y="${H-6}" fill="var(--muted)" font-size="10" font-family="Jost,sans-serif">${dl(xs[0])}</text><text x="${W-R}" y="${H-6}" fill="var(--muted)" font-size="10" text-anchor="end" font-family="Jost,sans-serif">${dl(xs[xs.length-1])}</text></svg></div>
+    <p class="small muted">Best set per workout${unit?` (${unit})`:""}</p>`;}
+function exProgressSection(){
+  const names=[...new Set((S.workouts||[]).flatMap(w=>w.ex.map(x=>x.n)))].sort();
+  let body;
+  if(!isPro())body=`<p class="small muted">See your best set for every exercise over time.</p><button class="btn ghost sm" data-tab="rank" style="align-self:flex-start">Unlock with Pro</button>`;
+  else if(!names.length)body=`<p class="empty">Pick an exercise you've logged to see your progress over time.</p>`;
+  else{const n=names.includes(progExName)?progExName:names[0];const pts=[];let unit="",k="";
+    for(const w of (S.workouts||[]).slice().sort((a,b)=>a.d-b.d)){const x=w.ex.find(e=>e.n===n);if(!x)continue;k=x.k;let v=0;
+      for(const st of x.sets){v=Math.max(v,k==="weighted"?(st.w?toU(st.w):0):k==="reps"?(st.r||0):k==="time"?(st.s||0):(st.dist?toD(st.dist):(st.m||0)));}
+      if(v>0)pts.push({x:w.d,y:Math.round(v*10)/10});}
+    unit=k==="weighted"?S.unit:k==="reps"?"reps":k==="time"?"sec":distU();
+    body=`<select id="prog-ex" aria-label="Exercise">${names.map(x=>`<option ${x===n?"selected":""}>${esc(x)}</option>`).join("")}</select>${lineChart(pts,unit)}`;}
+  return `<section class="sec">${head(5,"Exercise Progress",isPro()?"":'<span class="tag">Pro</span>')}<div class="card">${body}</div></section>`;}
+
+/* ---------- backup ---------- */
+async function exportBackup(){const data={app:"owluxe",v:2,exported:new Date().toISOString(),state:S,photos:photos||localPhotos||[]},js=JSON.stringify(data),name=`owluxe-backup-${TODAY}.json`;
+  if(dl){try{await dl.save({filename:name,data:js});toast(LANG==="es"?"Respaldo guardado":"Backup saved");}catch(e){if(!e||e.code!=="declined")toast(LANG==="es"?"No se pudo guardar el respaldo.":"Couldn't save the backup.");}return;}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([js],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);track("backup");toast("Backup downloaded");}
+  catch(e){toast(LANG==="es"?"No se pudo crear el respaldo.":"Couldn't create the backup.");}}
+async function importBackup(file){try{const data=JSON.parse(await file.text());if(!data||data.app!=="owluxe"||!data.state)throw 0;
+  S=mergeState(S,data.state);const ph=Array.isArray(data.photos)?data.photos:[];
+  if(photosCol){for(const p of ph){if(p&&p.id)await photosCol.doc(p.id).set(p).catch(()=>{});}}
+  else{const ids=new Set(localPhotos.map(p=>p.id));ph.forEach(p=>{if(p&&p.id&&!ids.has(p.id))localPhotos.push(p);});try{localStorage.setItem(KEY+".photos",JSON.stringify(localPhotos));}catch(e){}photos=localPhotos;}
+  LANG=S.lang||LANG;applyTheme();save();render();toast("Backup restored");}
+  catch(e){toast(LANG==="es"?"Ese archivo no es un respaldo de Owluxe.":"That file isn't an Owluxe backup.");}}
+
 /* ---------- render ---------- */
 function render(){
-  $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}));
+  $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
   $("#tabs").innerHTML=TABS.map(([k,n])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}${n}</button>`).join("");
   const kept={};document.querySelectorAll("[data-keep]").forEach(el=>{if(el.id&&el.value)kept[el.id]=el.value;}); const keep=$("#jtext")?.value, keepC=$("#cust-t")?.value, keepW=$("#w-in")?.value, keepN=$("#w-note")?.value;
   $("#view").innerHTML={today:viewToday,train:viewTrain,stats:viewStats,crew:viewCrew,journal:viewJournal,rank:viewRank}[tab]();
@@ -1052,6 +1279,7 @@ document.addEventListener("click",async e=>{
     const beforeLv=levelOf(totalXP()),hadGoal=dayCount(TODAY)>=DAILY_GOAL;
     if(m[k])delete m[k];else{m[k]=[c.xp,c.cat];toast(`+${c.xp} XP`);}
     if(!Object.keys(m).length)delete S.days[TODAY];
+    checkProgramDone();
     const afterLv=levelOf(totalXP());save();
     if(afterLv>beforeLv){const rw=REWARDS.find(r=>r.lv&&r.lv>beforeLv&&r.lv<=afterLv);setTimeout(()=>toast(rw?`Level ${afterLv}. Reward unlocked in Profile`:`Level ${afterLv} reached`),1000);}
     else if(!hadGoal&&dayCount(TODAY)>=DAILY_GOAL)setTimeout(()=>toast("Streak secured for today"),1000);
@@ -1087,7 +1315,18 @@ document.addEventListener("click",async e=>{
   const fr=e.target.closest("[data-frec]");if(fr){const o=recentFoods()[+fr.dataset.frec];if(o)pickFood(o);return;}
   if(e.target.closest("#fm-ai")){aiFill();return;}
   const fdl=e.target.closest("[data-fdel]");if(fdl){const fid=fdl.dataset.fdel;if(foodDel===fid){S.food[TODAY]=foodDay(TODAY).filter(x=>x.id!==fid);foodDel="";save();}else foodDel=fid;render();return;}
+  const lg=e.target.closest("[data-lang]");if(lg){LANG=S.lang=lg.dataset.lang;applyTheme();save();track("lang-"+LANG);render();return;}
+  const th=e.target.closest("[data-theme-set]");if(th){S.theme=th.dataset.themeSet;applyTheme();save();render();return;}
+  const rsv=e.target.closest("[data-rsave]");if(rsv){const w=(S.workouts||[]).find(x=>x.id===rsv.dataset.rsave);if(w&&saveRoutine(w.name||w.type,w.type,w.ex))render();return;}
+  const rst=e.target.closest("[data-rstart]");if(rst){const r=(S.routines||[]).find(x=>x.id===rst.dataset.rstart);if(r){if(S.active){toast(LANG==="es"?"Termina o descarta tu entreno actual primero":"Finish or discard your current workout first");return;}startRoutine(r);}return;}
+  const rdl=e.target.closest("[data-rdel]");if(rdl){const rid=rdl.dataset.rdel;if(rDelArmed===rid){S.routines=S.routines.filter(x=>x.id!==rid);rDelArmed="";save();}else rDelArmed=rid;render();return;}
+  const pst=e.target.closest("[data-pstart]");if(pst){const p=PROGRAMS.find(x=>x.id===pst.dataset.pstart);if(!p)return;if(p.premium&&!isPro()){tab="rank";render();return;}S.program={id:p.id,start:TODAY};leaveArmed=false;save();track("program-"+p.id);toast(`Started ${pn(p)}`);render();return;}
+  const plv=e.target.closest("[data-pleave]");if(plv){if(leaveArmed){S.program=null;leaveArmed=false;save();}else leaveArmed=true;render();return;}
   const id=e.target.id;
+  if(id==="wo-saveroutine"&&S.active){if(saveRoutine(S.active.name||S.active.type,S.active.type,S.active.ex))render();return;}
+  if(id==="pro-unlock"){const ok=await tryUnlock($("#pro-in")?.value);proMsg=ok?"":(LANG==="es"?"Ese código no funcionó. Revísalo e inténtalo otra vez.":"That code didn't work. Check it and try again.");if(ok){const i=$("#pro-in");if(i)i.value="";toast("Pro unlocked. Welcome to Owluxe Pro");}render();return;}
+  if(id==="bk-export"){exportBackup();return;}
+  if(id==="bk-import"){$("#backup-file").click();return;}
   if(id==="ref-join"){joinWithCode();return;}
   if(id==="food-pick"){$("#food-file").click();return;}
   if(id==="food-scan"){scanFood();return;}
@@ -1114,6 +1353,8 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("change",async e=>{
   if(e.target.id==="crew-sel"){S.crew=e.target.value;save();toast(S.crew?`Joined ${S.crew}`:"Left your crew");render();}
+  if(e.target.id==="backup-file"){const f=e.target.files&&e.target.files[0];e.target.value="";if(f)importBackup(f);return;}
+  if(e.target.id==="prog-ex"){progExName=e.target.value;render();return;}
   if(e.target.id==="food-file"){const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;try{foodImg=await fileToJpeg(f);foodBlob=dataURLtoBlob(foodImg);foodRes=null;foodErr="";}catch(_){foodErr="That file couldn't be read as an image.";}render();return;}
   if(e.target.id==="photo-file"){const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;try{pendingPhoto=await fileToJpeg(f);photoMsg="";}catch(_){photoMsg="That file couldn't be read as an image.";}render();}
 });
@@ -1132,7 +1373,12 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{if(e.target.id==="rest-len"&&S.active){S.active.rest=+e.target.value;save();}});
 if(S.active)requestWake();
+if(S.program){const p=curProg();if(!p||progDay()>p.days)S.program=null;}
+applyTheme();
+addEventListener("online",render);addEventListener("offline",render);
+if(STANDALONE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+(async()=>{const m=location.hash.match(/^#pro-([A-Za-z0-9]{6,32})$/);if(m&&await tryUnlock(m[1])){tab="rank";render();toast("Pro unlocked. Welcome to Owluxe Pro");}})();
 if(autoFreeze())setTimeout(()=>toast("Streak freeze used for yesterday"),600);
 saveLocal();render();boot();
 </script>
-</body></html>
+<script data-goatcounter="https://owluxe.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script></body></html>

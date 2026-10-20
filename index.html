@@ -136,7 +136,7 @@ textarea{min-height:110px;resize:vertical}
 .compare img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:3px;background:var(--surface-2)}
 .delta{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.04em;line-height:1}
 .chart svg{width:100%;height:auto;display:block}
-.recap img{width:100%;border-radius:4px;border:1px solid var(--line);display:block;background:var(--surface-2);aspect-ratio:4/5}
+.recap img{width:100%;max-width:340px;margin:0 auto;border-radius:6px;border:1px solid var(--line);display:block;background:var(--surface-2);aspect-ratio:9/16}
 .note{font-size:13px;color:var(--muted);border-left:2px solid var(--stone);padding-left:10px}
 
 .tabs{isolation:isolate;position:fixed;left:0;right:0;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
@@ -263,6 +263,30 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 @keyframes lvSlam{0%{opacity:0;transform:scale(2.6);letter-spacing:.35em}100%{opacity:1;transform:none}}
 @keyframes lvBump{50%{transform:scale(1.12)}}
 @media (prefers-reduced-motion:reduce){.lvlup,.lvlup *{animation:none!important}}
+.ach{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));z-index:45;width:min(420px,calc(100vw - 24px));display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:10px 14px;background:linear-gradient(180deg,rgba(10,12,12,.97),rgba(0,0,0,.97));border:1px solid var(--beam,#4e8197);border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.8),0 10px 30px rgba(0,0,0,.5),0 0 26px color-mix(in srgb,var(--beam,#4e8197) 45%,transparent);color:#f4f2e6;transform:translate(-50%,0);animation:achIn .5s cubic-bezier(.2,1.4,.4,1) both;pointer-events:none}
+.ach.out{animation:achOut .35s ease forwards}
+.ach-ic{filter:drop-shadow(0 0 10px var(--beam,#4e8197))}
+.ach-k{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--beam,#cedfd9)}
+.ach b{display:block;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:-.01em;font-size:18px;line-height:1.1}
+.ach-s{display:block;font-size:13px;color:#cfcab9}
+@keyframes achIn{from{opacity:0;transform:translate(-50%,-30px) scale(.9)}}
+@keyframes achOut{to{opacity:0;transform:translate(-50%,-24px)}}
+.chest-btn{background:none;border:0;padding:0;width:72px;height:64px;flex:none}
+.chest-btn:disabled{opacity:.45;cursor:default}
+.chest.ready .chest-btn{animation:chestShake 1.6s ease-in-out infinite;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--gold-2) 70%,transparent))}
+.chest.ready{border-color:var(--gold)}
+@keyframes chestShake{0%,70%,100%{transform:none}75%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}85%{transform:rotate(-4deg)}90%{transform:rotate(3deg)}}
+.chest-pop{animation:chestPop .6s ease}
+@keyframes chestPop{40%{transform:scale(1.25) rotate(-8deg)}}
+.quest{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.quest:first-child{border-top:0}
+.quest.claimed{opacity:.55}
+.quest>div:last-child{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ach-tile{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:10px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);min-width:0}
+.ach-tile b{font-size:12px;font-weight:500;line-height:1.2}
+.ach-tile span{font-size:10.5px;color:var(--muted);line-height:1.25}
+.ach-tile.lock{opacity:.5}
 @media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -445,6 +469,14 @@ const FOODS = [
   ["Soda, cola","12 oz",140,0,39,0],["Sports drink","20 oz",140,0,36,0],["Beer","12 oz",153,2,13,0],["Red wine","5 oz",125,0,4,0],["Fruit smoothie","16 oz",270,4,62,1],["Acai bowl","1 bowl",500,8,90,15],
 ];
 
+/* Game loop rewards */
+const PERFECT_XP = 50;                          // finish every task on Today
+const STREAK_MILESTONES = [3,7,14,30,60,100];   // bonus = days x 10 XP
+const STREAK_MULT_MAX = 0.30;                   // streak XP boost cap (+30% at a 30-day streak)
+const QUEST_XP = 75;                            // each weekly quest
+const ACH_XP = 25;                              // each achievement
+const CHEST = {common:[20,40], rare:50, legendary:100, rareChance:0.20, legendaryChance:0.05};
+
 /* Referrals */
 const REF_XP = 100;          // XP for the new member AND for the friend who invited them
 const REF_MAX = 25;          // most referrals that earn XP per person
@@ -495,7 +527,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0,ach:{},milestones:{}});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -512,7 +544,7 @@ const ES={
 "Rank":"Rango","LEVEL":"NIVEL","Start workout":"Empezar entreno","Resume":"Continuar","My habit":"Mi hábito","Owluxe event":"Evento Owluxe","Program":"Programa",
 "Physical":"Físico","Mind":"Mente","Social":"Social","Discipline":"Disciplina","day streak":"días de racha","today":"hoy",
 "Your Stats":"Tu progreso","Streak":"Racha","Best":"Mejor","Done":"Hechos","Last 7 days":"Últimos 7 días","Dashed = freeze used":"Punteado = comodín usado","XP by category":"XP por categoría",
-"Calendar":"Calendario","Weekly Recap":"Resumen semanal","Save image":"Guardar imagen","A story-sized card of your week, ready to post. It updates as you complete challenges.":"Una tarjeta de tu semana lista para historias. Se actualiza cuando completas retos.",
+"Calendar":"Calendario","Weekly Recap":"Resumen semanal","Save image":"Guardar imagen","A story-sized card of your week with a QR code people can scan to join you. It updates as you complete challenges.":"Una tarjeta de tu semana para historias, con un código QR para que otros se unan. Se actualiza cuando completas retos.",
 "Goal hit":"Meta cumplida","Partial":"Parcial","Freeze":"Comodín","Workout":"Entreno","Completed":"Completado","Freeze used":"Comodín usado","Nothing logged yet today.":"Aún no hay nada registrado hoy.","Nothing logged this day.":"No hay nada registrado este día.",
 "Leaderboard":"Clasificación","This week":"Esta semana","All time":"Histórico","People":"Personas","Crew Standings":"Ranking de crews","Your crew":"Tu crew","No crew":"Sin crew","Crew leaderboards are coming soon.":"Las clasificaciones de crews llegan pronto.",
 "Night Journal":"Diario nocturno","Entries":"Notas","Food":"Comida","Progress":"Progreso","Tonight's prompt":"La pregunta de hoy","Your entry":"Tu nota","Save entry":"Guardar nota","Past entries":"Notas anteriores","No entries yet. Your first one will show up here.":"Aún no hay notas. La primera aparecerá aquí.",
@@ -531,7 +563,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -566,7 +598,9 @@ const ES_RX=[
  [/^Free plan: (\d+) of (\d+) routines\. Pro removes the limit\.$/,"Plan gratis: $1 de $2 rutinas. Pro quita el límite."],[/^(.+) · (\d+) exercises$/,(m,a,b)=>`${tr(a)} · ${b} ejercicios`],
  [/^— attributed to (.+)$/,"— atribuida a $1"],[/^Workout saved, \+(\d+) XP$/,"Entreno guardado, +$1 XP"],[/^Logged (\d+) kcal$/,"Registrado: $1 kcal"],[/^(.+) added$/,(m,a)=>`${a} agregado`],
  [/^Showing (\d+) of (\d+)\. Search to narrow it down\.$/,"Mostrando $1 de $2. Busca para filtrar."],[/^Show more \((\d+)\)$/,"Ver más ($1)"],[/^(\d+) moves$/,"$1 ejercicios"],
- [/^Reward unlocked: (.+)$/,(m,a)=>"Premio desbloqueado: "+tr(a)],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
+ [/^Reward unlocked: (.+)$/,(m,a)=>"Premio desbloqueado: "+tr(a)],[/^Hit your daily goal to unlock it \((\d+)\/(\d+)\)\.$/,"Cumple tu meta diaria para abrirlo ($1/$2)."],[/^Resets in (\d+) days?$/,(m,a)=>`Se reinicia en ${a} día${a==="1"?"":"s"}`],[/^Claim \+(\d+)$/,"Reclamar +$1"],
+ [/^(\d+) of (\d+) unlocked$/,"$1 de $2 desbloqueados"],[/^Every task done · \+(\d+) XP$/,"Todas las tareas hechas · +$1 XP"],[/^Milestone bonus · \+(\d+) XP$/,"Bono de hito · +$1 XP"],[/^(\d+)-Day Streak$/,"Racha de $1 días"],[/^(\d+) achievements$/,"$1 logros"],
+ [/^\+(\d+) XP · See them in Profile$/,"+$1 XP · Míralos en Perfil"],[/^Chest opened · (.+)$/,(m,a)=>"Cofre abierto · "+tr(a)],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
 ];
 function tr(s){if(LANG!=="es"||!s)return s;const k=s.trim();if(!k)return s;if(ES[k]!=null)return s.replace(k,ES[k]);for(const [r,f] of ES_RX){if(r.test(k))return s.replace(k,k.replace(r,f));}return s;}
 function trTree(root){if(LANG!=="es"||!root)return;if(root.nodeType===3){const v=root.nodeValue,n=tr(v);if(n!==v)root.nodeValue=n;return;}if(root.nodeType!==1)return;
@@ -605,7 +639,8 @@ function dailyFor(date){
 
 /* ---------- scoring ---------- */
 const dayMap=d=>S.days[d]||{};
-const dayCount=d=>Object.keys(dayMap(d)).length;
+const isBonusKey=k=>/^(pd|chest|q:|sm:|a:|pb:)/.test(k);
+const dayCount=d=>Object.keys(dayMap(d)).filter(k=>!isBonusKey(k)).length;
 const dayOk=d=>dayCount(d)>=DAILY_GOAL||!!S.frozen[d];
 const sumDay=d=>Object.values(dayMap(d)).reduce((a,v)=>a+v[0],0);
 const totalXP=()=>Object.keys(S.days).reduce((a,d)=>a+sumDay(d),0)+refXP()+(S.adminXP||0);
@@ -655,7 +690,7 @@ function mergeState(a,b){
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
   const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
-  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);m.ach=Object.assign({},b.ach,a.ach);m.milestones=Object.assign({},b.milestones,a.milestones);
   return m;
 }
 async function boot(){
@@ -716,7 +751,7 @@ function crest(){
     <div class="crest-info"><span class="label"><span>Rank</span>${isPro()?' · <span style="color:var(--gold-2)">PRO</span>':""}</span>
       <div class="row" style="flex-wrap:nowrap">${badge(ti,44)}<div class="rank">${TIERS[ti][0]}</div></div>
       <div class="xpline"><span class="num">${xp-a}</span> / <span class="num">${b-a}</span> XP to level ${lv+1}</div>
-      <div class="chips"><span class="chip ${st?"hot":""}"><span class="num">${st}</span> day streak</span><span class="chip"><span class="num">${Math.min(done,DAILY_GOAL)}/${DAILY_GOAL}</span> today</span><span class="chip" title="Missed days forgiven this week">${freezesLeft()} freeze${freezesLeft()===1?"":"s"} left</span></div></div>
+      <div class="chips"><span class="chip ${st?"hot":""}"><span class="num">${st}</span> day streak</span><span class="chip"><span class="num">${Math.min(done,DAILY_GOAL)}/${DAILY_GOAL}</span> today</span>${xpMult()>1?`<span class="chip hot" title="Streak XP boost">XP ×${xpMult().toFixed(2)}</span>`:""}<span class="chip" title="Missed days forgiven this week">${freezesLeft()} freeze${freezesLeft()===1?"":"s"} left</span></div></div>
   </section>`;
 }
 
@@ -727,6 +762,7 @@ function viewToday(){
   return `<section class="quote" aria-label="Today's quote"><svg width="28" height="22" viewBox="0 0 28 22" aria-hidden="true"><path d="M0 22V12C0 5 4 1 11 0l1 3C8 4 6 7 6 10h5v12zm16 0V12c0-7 4-11 11-12l1 3c-4 1-6 4-6 7h5v12z" fill="var(--gold)"/></svg>
       <p>${esc(qt.q)}</p><span style="font-size:14px;color:var(--gold-2)">— ${esc(qt.a)}</span></section>
     ${crest()}
+    ${chestCard()}
     ${!S.focus?`<section class="card"><span class="label">Pick your focus</span><p class="small muted">Your focus adds a daily 2× bonus challenge. You can change it any time in Profile.</p><div class="pills">${Object.entries(FOCUSES).map(([k,f])=>`<button class="pill" data-focus="${k}">${f.n}</button>`).join("")}</div></section>`:""}
     <section class="sec">${head(1,"Today's Work",`<span class="label num">${done} of ${list.length}</span>`)}
       <div class="progress"><i style="width:${list.length?done/list.length*100:0}%"></i></div>
@@ -735,10 +771,11 @@ function viewToday(){
         <span class="t-body"><span class="t-title">${esc(c.t)}</span><span class="t-meta"><span class="dot" style="--c:var(${CATS[c.cat].c})"></span>${CATS[c.cat].n}${c.bonus?` <span class="tag">2× ${esc(c.bonus)}</span>`:""}${c.custom?' <span class="tag">My habit</span>':""}${c.event?' <span class="tag">Owluxe event</span>':""}${c.program?' <span class="tag">Program</span>':""}</span></span>
         <span class="xp">+${c.xp}</span></button>`).join("")}</div>
       <p class="empty">Finish ${DAILY_GOAL} to keep your streak. Miss a day and a streak freeze covers it, ${FREEZES_PER_WEEK} per week.</p></section>
+    ${questsCard()}
     ${progCard()}
     <section class="card"><div class="spread"><div style="min-width:0"><span class="label">Train</span><p>${S.active?`Workout in progress · <span class="num">${clock((Date.now()-S.active.start)/1000)}</span>`:`Log a workout for up to ${WORKOUT_XP.maxPerWorkout} XP`}</p></div><button class="btn sm" data-tab="train">${S.active?"Resume":"Start workout"}</button></div>
       ${(S.workouts||[]).filter(w=>w.date===TODAY).map(w=>`<div class="entry"><div class="spread"><span>${esc(w.name||w.type)} · ${clock(w.dur)} · ${w.sets} sets</span><span class="xp">+${w.xp} XP</span></div></div>`).join("")}</section>
-    ${upcoming.length?`<section class="sec">${head(2,"Owluxe Events")}<div class="card">${upcoming.map(e=>`<div class="event"><div class="cal"><span>${fmt(e.date,{month:"short"})}</span><b>${D(e.date).getDate()}</b></div><div style="min-width:0"><b style="font-weight:500">${esc(e.t)}</b><p class="small muted">${esc(fmt(e.date,{weekday:"long"}))} · ${esc(e.time)} · ${esc(e.place)}</p><p class="small" style="color:var(--gold-2)">Check in on the day for +${e.xp} XP</p></div></div>`).join("")}</div></section>`:""}`;
+    ${upcoming.length?`<section class="sec">${head(3,"Owluxe Events")}<div class="card">${upcoming.map(e=>`<div class="event"><div class="cal"><span>${fmt(e.date,{month:"short"})}</span><b>${D(e.date).getDate()}</b></div><div style="min-width:0"><b style="font-weight:500">${esc(e.t)}</b><p class="small muted">${esc(fmt(e.date,{weekday:"long"}))} · ${esc(e.time)} · ${esc(e.place)}</p><p class="small" style="color:var(--gold-2)">Check in on the day for +${e.xp} XP</p></div></div>`).join("")}</div></section>`:""}`;
 }
 
 let recapURL="",recapBlob=null;
@@ -751,7 +788,7 @@ function viewStats(){
     <div class="card"><span class="label">XP by category</span>${Object.entries(CATS).map(([k,v])=>`<div class="cat" style="--c:var(${v.c})"><span>${v.n}</span><span class="bar"><i style="width:${cx[k]/max*100}%"></i></span><span class="num">${cx[k]}</span></div>`).join("")}</div></section>
     ${calendarSection()}
     <section class="sec recap">${head(3,"Weekly Recap")}
-      <div class="card"><p class="small muted">A story-sized card of your week, ready to post. It updates as you complete challenges.</p>
+      <div class="card"><p class="small muted">A story-sized card of your week with a QR code people can scan to join you. It updates as you complete challenges.</p>
         <img id="recap-img" alt="Your weekly recap card" ${recapURL?`src="${recapURL}"`:""}>
         <div class="row"><button class="btn" id="recap-save" ${dl?"":"hidden"}>Save image</button><span class="small muted" id="recap-hint">${dl?"":"Long-press or right-click the image to save it."}</span></div></div></section>`;
 }
@@ -847,8 +884,9 @@ function viewRank(){
     <section class="sec">${head(4,"Invite Friends")}<div class="card">${referralCard()}</div></section>
     <section class="sec">${head(5,"Rewards")}<div class="card"><p class="small muted">Unlock real Owluxe rewards as you rank up.</p>
       ${REWARDS.map(r=>{const open=rewardOpen(r);return `<div class="reward ${open?"":"locked"}"><div style="min-width:0"><b style="font-weight:500">${esc(r.t)}</b><p class="small muted">${r.lv?`Reach level ${r.lv}`:r.refs?`Invite ${r.refs} friends who join`:`Hit a ${r.streak}-day streak`}</p>${open?`<p style="margin-top:6px"><span class="code">${esc(r.code)}</span></p>`:""}</div>${open?`<button class="btn sm" data-copy="${esc(r.code)}">Copy</button>`:`<span class="small muted">Locked</span>`}</div>`}).join("")}</div></section>
-    <section class="sec">${head(6,"Prestige Ranks")}<div class="card"><div class="tiers">${TIERS.map(([n,l],i)=>`<div class="tier ${i===ti?"on":""}"><span class="row" style="flex-wrap:nowrap;gap:12px">${badge(i,48,lv<l)}<span style="display:flex;flex-direction:column"><b style="color:${lv<l?"var(--muted)":"var(--fg)"}">${n}</b><span style="font-size:12px">${lv>=l?(i===ti?"Current rank":"Unlocked"):"Locked"}</span></span></span><span class="num">Lv ${l}+</span></div>`).join("")}</div></div></section>
-    <section class="sec">${head(7,"Settings")}<div class="card"><p class="small">${syncState==="synced"?"Progress is synced to your claude.ai account, on every device.":(STANDALONE?"Progress, photos and journal are saved on this device and browser only.":"Progress is saved on this device. Sign in to claude.ai to sync it across devices.")}</p>
+    ${achSection()}
+    <section class="sec">${head(7,"Prestige Ranks")}<div class="card"><div class="tiers">${TIERS.map(([n,l],i)=>`<div class="tier ${i===ti?"on":""}"><span class="row" style="flex-wrap:nowrap;gap:12px">${badge(i,48,lv<l)}<span style="display:flex;flex-direction:column"><b style="color:${lv<l?"var(--muted)":"var(--fg)"}">${n}</b><span style="font-size:12px">${lv>=l?(i===ti?"Current rank":"Unlocked"):"Locked"}</span></span></span><span class="num">Lv ${l}+</span></div>`).join("")}</div></div></section>
+    <section class="sec">${head(8,"Settings")}<div class="card"><p class="small">${syncState==="synced"?"Progress is synced to your claude.ai account, on every device.":(STANDALONE?"Progress, photos and journal are saved on this device and browser only.":"Progress is saved on this device. Sign in to claude.ai to sync it across devices.")}</p>
       <div><span class="label">Backup</span><p class="small muted">Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.</p>
         <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="bk-export">Download backup</button><button class="btn ghost sm" id="bk-import">Restore from backup</button></div></div>
       <button class="btn ghost" id="reset" style="align-self:flex-start">${resetArmed?"Tap again to reset challenges, XP and journal":"Reset progress"}</button><p class="small muted">Reset keeps your progress photos.</p></div></section>`;
@@ -964,6 +1002,7 @@ function finishWorkout(){
   const beforeLv=levelOf(totalXP());
   S.workouts=(S.workouts||[]).concat(W).slice(-60);
   if(xp>0){const day=S.days[date]=S.days[date]||{};day["w:"+a.id]=[xp,"physical"];}
+  afterTaskToggle();
   track("workout");S.active=null;restEnd=0;pbCache=null;lastSummary=W;exPick=false;save();releaseWake();beep(1320,200);
   const afterLv=levelOf(totalXP());toast(afterLv>beforeLv?`Workout saved. Level ${afterLv} reached`:`Workout saved, +${xp} XP`);render();scrollTo(0,0);
 }
@@ -1335,6 +1374,95 @@ function celebrate(from,to,forceRank){
   setTimeout(()=>{const iv=setInterval(()=>{k++;const v=Math.min(to,from+Math.ceil(k*(to-from)/steps));if(cnt){cnt.textContent=v;cnt.classList.remove("bump");void cnt.offsetWidth;cnt.classList.add("bump");}if(v>=to)clearInterval(iv);},700/steps);},500);
 }
 
+/* ---------- game loop ---------- */
+const xpMult=()=>1+Math.min(STREAK_MULT_MAX,streak()/100);
+const bannerQ=[];let bannerOn=false;
+function banner(t,sub,ti=3,k="Achievement unlocked"){bannerQ.push({t,sub,ti,k});if(!bannerOn)nextBanner();}
+function nextBanner(){const b=bannerQ.shift();if(!b){bannerOn=false;return;}bannerOn=true;
+  const el=document.createElement("div");el.className="ach";el.setAttribute("role","status");el.style.setProperty("--beam",METALS[Math.max(0,Math.min(5,b.ti))][1]);
+  el.innerHTML=`<div class="ach-ic">${badge(Math.max(0,Math.min(5,b.ti)),44)}</div><div style="min-width:0"><span class="ach-k">${esc(b.k)}</span><b>${esc(b.t)}</b><span class="ach-s">${esc(b.sub)}</span></div>`;
+  document.body.appendChild(el);beep(880,90);setTimeout(()=>beep(1320,170),120);
+  setTimeout(()=>{el.classList.add("out");setTimeout(()=>{el.remove();nextBanner();},360);},3300);}
+function afterTaskToggle(){
+  const m=S.days[TODAY]||(S.days[TODAY]={}),list=dailyFor(TODAY),all=list.length>0&&list.every(c=>m[c.key]);
+  if(all&&!m.pd){m.pd=[PERFECT_XP,"discipline"];setTimeout(()=>banner("Perfect Day",`Every task done · +${PERFECT_XP} XP`,3,"Bonus"),900);track("perfect-day");}
+  else if(!all&&m.pd)delete m.pd;
+  if(dayCount(TODAY)>=DAILY_GOAL){const st=streak();S.milestones=S.milestones||{};
+    for(const n of STREAK_MILESTONES)if(st>=n&&!S.milestones[n]){S.milestones[n]=TODAY;m["sm:"+n]=[n*10,"discipline"];setTimeout(()=>banner(`${n}-Day Streak`,`Milestone bonus · +${n*10} XP`,n>=60?5:n>=30?4:n>=7?3:1,"Streak milestone"),1700);}}
+  if(!Object.keys(m).length)delete S.days[TODAY];
+}
+
+/* daily chest */
+function chestSVG(open){return `<svg viewBox="0 0 72 64" width="72" height="64" aria-hidden="true"><defs><linearGradient id="chg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8cb86"/><stop offset=".55" stop-color="#86692f"/><stop offset="1" stop-color="#e8cb86"/></linearGradient></defs>
+  ${open?'<ellipse cx="36" cy="30" rx="24" ry="9" fill="#cedfd9" opacity=".55"/>':""}
+  <rect x="8" y="30" width="56" height="28" rx="3" fill="#1a1c1c" stroke="url(#chg)" stroke-width="3"/><rect x="8" y="40" width="56" height="4" fill="url(#chg)"/>
+  <g ${open?'transform="rotate(-28 8 30)"':""}><path d="M8 30 V22 Q8 10 36 10 Q64 10 64 22 V30Z" fill="#0d0e0e" stroke="url(#chg)" stroke-width="3"/><rect x="31" y="24" width="10" height="12" rx="2" fill="url(#chg)"/></g></svg>`;}
+function chestCard(){const m=dayMap(TODAY),ready=dayCount(TODAY)>=DAILY_GOAL;
+  if(m.chest)return `<section class="card chest"><div class="spread"><div style="min-width:0"><span class="label">Daily chest</span><p><span>Opened:</span> <b class="num" style="color:var(--gold-2)">+${m.chest[0]} XP</b><span>. Come back tomorrow.</span></p></div><span class="chest-btn">${chestSVG(true)}</span></div></section>`;
+  return `<section class="card chest ${ready?"ready":""}"><div class="spread"><div style="min-width:0"><span class="label">Daily chest</span><p>${ready?"Your chest is ready. Tap to open.":`Hit your daily goal to unlock it (${Math.min(dayCount(TODAY),DAILY_GOAL)}/${DAILY_GOAL}).`}</p></div><button class="chest-btn" data-chest="1" ${ready?"":"disabled"} aria-label="Open daily chest">${chestSVG(false)}</button></div></section>`;}
+function openChest(btn){const m=S.days[TODAY];if(!m||m.chest||dayCount(TODAY)<DAILY_GOAL)return;
+  const r=Math.random(),leg=r<CHEST.legendaryChance,rare=!leg&&r<CHEST.legendaryChance+CHEST.rareChance;
+  const xp=leg?CHEST.legendary:rare?CHEST.rare:CHEST.common[0]+Math.floor(Math.random()*(CHEST.common[1]-CHEST.common[0]+1));
+  if(btn)btn.classList.add("chest-pop");beep(660,80);setTimeout(()=>beep(990,120),120);
+  setTimeout(()=>{m.chest=[xp,"discipline"];save();track("chest-"+(leg?"legendary":rare?"rare":"common"));
+    banner(`+${xp} XP`,`Chest opened · ${leg?"Legendary":rare?"Rare":"Common"}`,leg?5:rare?3:1,leg?"Legendary":rare?"Rare":"Daily chest");render();},450);}
+
+/* weekly quests */
+const weekDaysOf=wk=>[...Array(7)].map((_,i)=>addDays(wk,i));
+const QUESTS=[
+  {id:"w3",t:"Finish 3 workouts",tes:"Termina 3 entrenos",n:3,m:wk=>(S.workouts||[]).filter(w=>weekStart(w.date)===wk).length},
+  {id:"g5",t:"Hit your daily goal on 5 days",tes:"Cumple tu meta 5 días",n:5,m:wk=>weekDaysOf(wk).filter(d=>dayCount(d)>=DAILY_GOAL).length},
+  {id:"c15",t:"Complete 15 challenges",tes:"Completa 15 retos",n:15,m:wk=>weekDaysOf(wk).reduce((a,d)=>a+dayCount(d),0)},
+  {id:"f5",t:"Log food on 5 days",tes:"Registra comida 5 días",n:5,m:wk=>weekDaysOf(wk).filter(d=>foodDay(d).length).length},
+  {id:"j3",t:"Write 3 journal entries",tes:"Escribe 3 notas en el diario",n:3,m:wk=>S.journal.filter(j=>weekStart(iso(new Date(j.d)))===wk).length},
+  {id:"p2",t:"Have 2 perfect days",tes:"Logra 2 días perfectos",n:2,m:wk=>weekDaysOf(wk).filter(d=>dayMap(d).pd).length},
+  {id:"s20",t:"Do 20 workout sets",tes:"Haz 20 series de entreno",n:20,m:wk=>(S.workouts||[]).filter(w=>weekStart(w.date)===wk).reduce((a,w)=>a+(w.sets||0),0)},
+  {id:"m60",t:"Train for 60 minutes",tes:"Entrena 60 minutos",n:60,m:wk=>Math.floor((S.workouts||[]).filter(w=>weekStart(w.date)===wk).reduce((a,w)=>a+(w.dur||0),0)/60)},
+];
+function weekQuests(wk){const r=rng("quest"+wk),pool=QUESTS.slice(),out=[];while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(r()*pool.length),1)[0]);return out;}
+const questClaimed=(wk,id)=>weekDaysOf(wk).some(d=>dayMap(d)["q:"+wk+":"+id]);
+function questsCard(){const wk=weekStart(TODAY),left=7-((D(TODAY).getDay()+6)%7);
+  return `<section class="sec">${head(2,"Weekly Quests",`<span class="label">Resets in ${left} day${left===1?"":"s"}</span>`)}<div class="card">${weekQuests(wk).map(q=>{const v=Math.min(q.n,q.m(wk)),done=v>=q.n,cl=questClaimed(wk,q.id);
+    return `<div class="quest ${cl?"claimed":""}"><div style="min-width:0"><b style="font-weight:500">${esc(LANG==="es"?q.tes:q.t)}</b><div class="bar" style="margin-top:6px"><i style="width:${v/q.n*100}%"></i></div></div>
+      <div><span class="num small">${v}/${q.n}</span>${cl?'<span class="tag">Claimed</span>':done?`<button class="btn sm" data-qclaim="${q.id}">Claim +${QUEST_XP}</button>`:`<span class="xp">+${QUEST_XP}</span>`}</div></div>`;}).join("")}</div></section>`;}
+
+/* achievements */
+const ACHIEVEMENTS=[
+  {id:"first-step",ti:0,n:"First Step",nes:"Primer paso",d:"Complete your first challenge",des:"Completa tu primer reto",t:x=>x.ch>=1},
+  {id:"locked-in",ti:0,n:"Locked In",nes:"Enfocado",d:"Hit your daily goal",des:"Cumple tu meta diaria",t:x=>x.goalDays>=1},
+  {id:"warming-up",ti:1,n:"Warming Up",nes:"Calentando",d:"Reach a 3-day streak",des:"Logra una racha de 3 días",t:x=>x.best>=3},
+  {id:"week-strong",ti:2,n:"One Week Strong",nes:"Una semana fuerte",d:"Reach a 7-day streak",des:"Logra una racha de 7 días",t:x=>x.best>=7},
+  {id:"unbreakable",ti:5,n:"Unbreakable",nes:"Inquebrantable",d:"Reach a 30-day streak",des:"Logra una racha de 30 días",t:x=>x.best>=30},
+  {id:"first-rep",ti:0,n:"First Rep",nes:"Primera repetición",d:"Finish your first workout",des:"Termina tu primer entreno",t:x=>x.wo>=1},
+  {id:"iron-regular",ti:2,n:"Iron Regular",nes:"Fijo del gym",d:"Finish 10 workouts",des:"Termina 10 entrenos",t:x=>x.wo>=10},
+  {id:"gym-rat",ti:3,n:"Gym Rat",nes:"Rata de gimnasio",d:"Finish 50 workouts",des:"Termina 50 entrenos",t:x=>x.wo>=50},
+  {id:"heavy",ti:3,n:"Heavy Lifter",nes:"Levantador pesado",d:"Lift 5,000 kg (11,000 lb) in total",des:"Levanta 5.000 kg en total",t:x=>x.vol>=5000},
+  {id:"perfect",ti:1,n:"Perfect Day",nes:"Día perfecto",d:"Finish every task in a day",des:"Completa todas las tareas de un día",t:x=>x.perfect>=1},
+  {id:"flawless",ti:4,n:"Flawless",nes:"Impecable",d:"Have 7 perfect days",des:"Ten 7 días perfectos",t:x=>x.perfect>=7},
+  {id:"fuel",ti:2,n:"Fuel Tracker",nes:"Control de combustible",d:"Log food on 7 days",des:"Registra comida 7 días",t:x=>x.foodDays>=7},
+  {id:"night-owl",ti:2,n:"Night Owl",nes:"Búho nocturno",d:"Write 7 journal entries",des:"Escribe 7 notas en tu diario",t:x=>x.journal>=7},
+  {id:"before-shot",ti:1,n:"Before Shot",nes:"Foto del antes",d:"Add your first progress check-in",des:"Agrega tu primer registro de progreso",t:x=>x.checkins>=1},
+  {id:"gold-standard",ti:3,n:"Gold Standard",nes:"Estándar de oro",d:"Reach level 10",des:"Llega al nivel 10",t:x=>x.level>=10},
+  {id:"recruiter",ti:2,n:"Recruiter",nes:"Reclutador",d:"Invite a friend who joins",des:"Invita a un amigo que se una",t:x=>x.refs>=1},
+  {id:"programmed",ti:4,n:"Programmed",nes:"Programado",d:"Finish a program",des:"Termina un programa",t:x=>x.programs>=1},
+  {id:"quest-master",ti:4,n:"Quest Master",nes:"Maestro de misiones",d:"Complete 10 weekly quests",des:"Completa 10 misiones semanales",t:x=>x.quests>=10},
+  {id:"treasure",ti:1,n:"Treasure Hunter",nes:"Cazatesoros",d:"Open 7 daily chests",des:"Abre 7 cofres diarios",t:x=>x.chests>=7},
+];
+const an=a=>LANG==="es"?a.nes:a.n, ad=a=>LANG==="es"?a.des:a.d;
+function achStats(){const days=Object.keys(S.days);let goalDays=0,perfect=0,ch=0,quests=0,chests=0;
+  for(const d of days){const c=dayCount(d),m=S.days[d];ch+=c;if(c>=DAILY_GOAL)goalDays++;if(m.pd)perfect++;if(m.chest)chests++;quests+=Object.keys(m).filter(k=>k.startsWith("q:")).length;}
+  const ws=S.workouts||[];
+  return {ch,goalDays,perfect,quests,chests,best:best(),wo:ws.length,vol:ws.reduce((a,w)=>a+(w.vol||0),0),foodDays:Object.keys(S.food||{}).filter(d=>(S.food[d]||[]).length).length,
+    journal:S.journal.length,checkins:(photos||localPhotos||[]).length,level:levelOf(totalXP()),refs:refCount(),programs:Object.keys(S.progDone||{}).length};}
+function checkAchievements(){S.ach=S.ach||{};const x=achStats(),nw=[];
+  for(const a of ACHIEVEMENTS)if(!S.ach[a.id]&&a.t(x)){S.ach[a.id]=TODAY;(S.days[TODAY]=S.days[TODAY]||{})["a:"+a.id]=[ACH_XP,"discipline"];nw.push(a);}
+  if(!nw.length)return;save();
+  if(nw.length>3)banner(`${nw.length} achievements`,`+${nw.length*ACH_XP} XP · See them in Profile`,3,"Achievements unlocked");
+  else nw.forEach(a=>banner(an(a),`${ad(a)} · +${ACH_XP} XP`,a.ti,"Achievement unlocked"));}
+function achSection(){const got=ACHIEVEMENTS.filter(a=>S.ach&&S.ach[a.id]).length;
+  return `<section class="sec">${head(6,"Achievements",`<span class="label">${got} of ${ACHIEVEMENTS.length} unlocked</span>`)}<div class="card"><div class="ach-grid">${ACHIEVEMENTS.map(a=>{const on=S.ach&&S.ach[a.id];
+    return `<div class="ach-tile ${on?"":"lock"}" title="${esc(ad(a))}">${badge(a.ti,40,!on)}<b>${esc(an(a))}</b><span>${esc(ad(a))}</span></div>`;}).join("")}</div></div></section>`;}
+
 /* ---------- render ---------- */
 function render(){
   $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
@@ -1349,6 +1477,7 @@ function render(){
   if(keepW&&$("#w-in"))$("#w-in").value=keepW; if(keepN&&$("#w-note"))$("#w-note").value=keepN;
   for(const k in kept){const el=document.getElementById(k);if(el)el.value=kept[k];}
   if(tab==="crew")fillNames(); if(tab==="stats")drawRecap();
+  checkAchievements();
   checkLevel();
 }
 async function fillNames(){
@@ -1359,28 +1488,48 @@ async function fillNames(){
 }
 
 /* ---------- weekly recap image ---------- */
-let recapKey="";
+let recapKey="",qrLib=null;
+function loadQR(){if(window.qrcode)return Promise.resolve(window.qrcode);if(qrLib)return qrLib;
+  qrLib=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";sc.onload=()=>window.qrcode?res(window.qrcode):rej();sc.onerror=()=>{qrLib=null;rej();};document.head.appendChild(sc);});return qrLib;}
+const OWL_PATHS=["M6 12 C40 20 66 34 76 48 L72 22 C88 40 96 64 94 90 C86 66 72 50 52 38 C66 46 72 54 74 60 C60 52 40 40 6 12Z","M40 40 C26 46 22 64 32 74 C40 82 56 82 66 74 C54 78 42 74 38 64 C35 56 36 48 40 40Z","M48 56 C46 64 50 70 58 70 L62 66 C56 64 50 60 48 56Z"];
+function drawOwl(g,x,y,size,color){g.save();g.translate(x,y);g.scale(size/100,size/100);g.fillStyle=color;for(const p of OWL_PATHS){try{g.fill(new Path2D(p));}catch(e){}}g.restore();}
+function shareURL(){return STANDALONE?(location.origin+location.pathname):(SHARE_URL+(myCode?"#ref-"+myCode:""));}
+function rrect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
 async function drawRecap(){
-  const wk=weekStart(TODAY),xp=totalXP(),lv=levelOf(xp),ti=tierIdx(lv),k=[wk,weekXP(),weekDone(),streak(),lv].join("|");
+  const wk=weekStart(TODAY),xp=totalXP(),lv=levelOf(xp),ti=tierIdx(lv),url=shareURL(),k=[wk,weekXP(),weekDone(),streak(),lv,url,LANG].join("|");
   if(k===recapKey&&recapURL){const im=$("#recap-img");if(im)im.src=recapURL;return;} recapKey=k;
-  const c=document.createElement("canvas");c.width=1080;c.height=1350;const g=c.getContext("2d");
+  const c=document.createElement("canvas");c.width=1080;c.height=1920;const g=c.getContext("2d");
   try{await Promise.all([document.fonts.load('800 100px "Hanken Grotesk"'),document.fonts.load('italic 800 60px "Hanken Grotesk"'),document.fonts.load('400 40px Jost')]);}catch(e){}
-  const HG='"Hanken Grotesk","Helvetica Neue",Arial,sans-serif',J='Jost,Futura,sans-serif';
-  g.fillStyle="#000";g.fillRect(0,0,1080,1350);
-  const gr=g.createRadialGradient(920,1180,40,920,1180,760);gr.addColorStop(0,"rgba(78,129,151,.6)");gr.addColorStop(1,"rgba(78,129,151,0)");g.fillStyle=gr;g.fillRect(0,0,1080,1350);
-  const sp=(px)=>{try{g.letterSpacing=px+"px";}catch(e){}};
-  g.textBaseline="alphabetic";g.fillStyle="#f4f2e6";g.font=`800 44px ${HG}`;sp(-1);g.fillText("OWLUXE",80,120);
-  g.font=`400 32px ${J}`;sp(1);g.fillStyle="#8f8a7c";g.textAlign="right";g.fillText("( WEEKLY RECAP )",1000,120);g.textAlign="left";
-  g.fillStyle="#f4f2e6";g.font=`800 132px ${HG}`;sp(-6);g.fillText("WEEK OF",72,330);
-  g.fillStyle="#cedfd9";g.fillText(fmt(wk,{month:"short",day:"numeric"}).toUpperCase(),72,460);
-  const stat=(x,y,l,v)=>{g.fillStyle="#8f8a7c";g.font=`400 30px ${J}`;sp(3);g.fillText(l,x,y);g.fillStyle="#f4f2e6";g.font=`800 120px ${HG}`;sp(-4);g.fillText(String(v),x,y+120);};
-  stat(80,600,"XP EARNED",weekXP());stat(560,600,"CHALLENGES",weekDone());stat(80,860,"DAY STREAK",streak());stat(560,860,"LEVEL",lv);
+  const HG='"Hanken Grotesk","Helvetica Neue",Arial,sans-serif',J='Jost,Futura,sans-serif',es=LANG==="es";
+  const sp=px=>{try{g.letterSpacing=px+"px";}catch(e){}};
+  g.fillStyle="#000";g.fillRect(0,0,1080,1920);
+  let gr=g.createRadialGradient(900,1500,40,900,1500,900);gr.addColorStop(0,"rgba(78,129,151,.55)");gr.addColorStop(1,"rgba(78,129,151,0)");g.fillStyle=gr;g.fillRect(0,0,1080,1920);
+  gr=g.createRadialGradient(120,260,10,120,260,600);gr.addColorStop(0,"rgba(206,223,217,.10)");gr.addColorStop(1,"rgba(206,223,217,0)");g.fillStyle=gr;g.fillRect(0,0,1080,1920);
+  g.textBaseline="alphabetic";drawOwl(g,80,78,64,"#f4f2e6");
+  g.fillStyle="#f4f2e6";g.font=`800 46px ${HG}`;sp(-1);g.fillText("OWLUXE",162,128);
+  g.font=`400 30px ${J}`;sp(2);g.fillStyle="#8f8a7c";g.textAlign="right";g.fillText(es?"( RESUMEN SEMANAL )":"( WEEKLY RECAP )",1000,124);g.textAlign="left";
+  g.fillStyle="#f4f2e6";g.font=`800 136px ${HG}`;sp(-6);g.fillText(es?"SEMANA DEL":"WEEK OF",72,360);
+  g.fillStyle="#cedfd9";g.fillText(fmt(wk,{month:"short",day:"numeric"}).toUpperCase().replace(".",""),72,494);
+  const stat=(x,y,l,v)=>{g.fillStyle="#8f8a7c";g.font=`400 30px ${J}`;sp(3);g.fillText(l,x,y);g.fillStyle="#f4f2e6";g.font=`800 124px ${HG}`;sp(-4);g.fillText(String(v),x,y+124);};
+  stat(80,640,es?"XP GANADA":"XP EARNED",weekXP());stat(580,640,es?"RETOS":"CHALLENGES",weekDone());
+  stat(80,900,es?"DÍAS DE RACHA":"DAY STREAK",streak());stat(580,900,es?"NIVEL":"LEVEL",lv);
   const wc=weekCatXP(wk),topK=Object.keys(wc).sort((a,b)=>wc[b]-wc[a])[0];
-  g.fillStyle="#2a2c2b";g.fillRect(80,1040,920,2);
-  g.fillStyle="#8f8a7c";g.font=`400 30px ${J}`;sp(3);g.fillText("STRONGEST",80,1110);
-  g.fillStyle="#f4f2e6";g.font=`800 64px ${HG}`;sp(-2);g.fillText(wc[topK]?CATS[topK].n.toUpperCase():"JUST GETTING STARTED",80,1185);
-  g.fillStyle="#cedfd9";g.font=`italic 800 46px ${HG}`;sp(0);g.fillText(TIERS[ti][0].toUpperCase(),80,1270);
-  await new Promise(res=>{const im=new Image();im.onload=()=>{g.drawImage(im,770,1060,230,230);res();};im.onerror=res;im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(badge(ti,230));});
+  g.fillStyle="#2a2c2b";g.fillRect(80,1095,920,2);
+  g.fillStyle="#8f8a7c";g.font=`400 30px ${J}`;sp(3);g.fillText(es?"MÁS FUERTE EN":"STRONGEST",80,1165);
+  g.fillStyle="#f4f2e6";g.font=`800 66px ${HG}`;sp(-2);g.fillText(wc[topK]?(es?({physical:"FÍSICO",mind:"MENTE",social:"SOCIAL",discipline:"DISCIPLINA"})[topK]:CATS[topK].n.toUpperCase()):(es?"EMPEZANDO":"JUST GETTING STARTED"),80,1245);
+  await new Promise(res=>{const im=new Image();im.onload=()=>{g.drawImage(im,64,1290,200,200);res();};im.onerror=res;im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(badge(ti,200));});
+  g.fillStyle="#cedfd9";g.font=`italic 800 58px ${HG}`;sp(0);g.fillText(TIERS[ti][0].toUpperCase(),288,1392);
+  g.fillStyle="#8f8a7c";g.font=`400 30px ${J}`;sp(2);g.fillText((es?"NIVEL ":"LEVEL ")+lv+(isPro()?" · PRO":""),290,1442);
+  // QR block
+  const qs=360,qx=640,qy=1500;
+  try{const Q=await loadQR(),qr=Q(0,"H");qr.addData(url);qr.make();const n=qr.getModuleCount(),pad=26,inner=qs-pad*2,cell=inner/n;
+    g.fillStyle="#f4f2e6";rrect(g,qx,qy,qs,qs,26);g.fill();
+    g.fillStyle="#0b0b0b";for(let r=0;r<n;r++)for(let cI=0;cI<n;cI++)if(qr.isDark(r,cI))g.fillRect(qx+pad+cI*cell,qy+pad+r*cell,Math.ceil(cell),Math.ceil(cell));
+    const ls=inner*.24,lx=qx+qs/2-ls/2,ly=qy+qs/2-ls/2;g.fillStyle="#f4f2e6";rrect(g,lx-8,ly-8,ls+16,ls+16,14);g.fill();g.fillStyle="#000";rrect(g,lx,ly,ls,ls,10);g.fill();drawOwl(g,lx+ls*.14,ly+ls*.12,ls*.72,"#f4f2e6");
+    g.fillStyle="#f4f2e6";g.font=`800 64px ${HG}`;sp(-2);g.fillText(es?"ESCANEA Y":"SCAN TO",80,1600);g.fillStyle="#cedfd9";g.fillText(es?"ENTRENA":"TRAIN WITH",80,1672);g.fillText(es?"CONMIGO":"ME",80,1744);
+    g.fillStyle="#8f8a7c";g.font=`400 26px ${J}`;sp(1);g.fillText(myCode?((es?"CÓDIGO ":"CODE ")+myCode):(STANDALONE?location.host.toUpperCase():"OWLUXE"),82,1810);
+  }catch(e){g.fillStyle="#8f8a7c";g.font=`400 28px ${J}`;g.fillText(es?"Conéctate para agregar el código QR":"Go online to add the QR code",80,1700);recapKey="";}
+  g.fillStyle="#2a2c2b";g.fillRect(80,1880,920,2);
   await new Promise(res=>c.toBlob(b=>{recapBlob=b;res();},"image/png"));
   recapURL=c.toDataURL("image/png");const im=$("#recap-img");if(im)im.src=recapURL;
 }
@@ -1413,9 +1562,10 @@ document.addEventListener("click",async e=>{
   const task=e.target.closest(".task");
   if(task){const k=task.dataset.key,c=dailyFor(TODAY).find(x=>x.key===k);if(!c)return;const m=S.days[TODAY]=S.days[TODAY]||{};
     const beforeLv=levelOf(totalXP()),hadGoal=dayCount(TODAY)>=DAILY_GOAL;
-    if(m[k])delete m[k];else{m[k]=[c.xp,c.cat];toast(`+${c.xp} XP`);}
+    if(m[k])delete m[k];else{const mu=xpMult(),gx=Math.round(c.xp*mu);m[k]=[gx,c.cat];toast(`+${gx} XP${mu>1?` · ×${mu.toFixed(2)}`:""}`);}
     if(!Object.keys(m).length)delete S.days[TODAY];
     checkProgramDone();
+    afterTaskToggle();
     const afterLv=levelOf(totalXP());save();
     if(afterLv>beforeLv){const rw=REWARDS.find(r=>r.lv&&r.lv>beforeLv&&r.lv<=afterLv);setTimeout(()=>toast(rw?`Level ${afterLv}. Reward unlocked in Profile`:`Level ${afterLv} reached`),1000);}
     else if(!hadGoal&&dayCount(TODAY)>=DAILY_GOAL)setTimeout(()=>toast("Streak secured for today"),1000);
@@ -1461,6 +1611,8 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#brand")){logoTaps++;clearTimeout(logoTimer);logoTimer=setTimeout(()=>logoTaps=0,1500);if(logoTaps>=5){logoTaps=0;adminPrompt=true;tab="rank";render();scrollTo(0,0);}return;}
   const axp=e.target.closest("[data-axp]");if(axp&&adminOn()){const b=levelOf(totalXP());S.adminXP=(S.adminXP||0)+(+axp.dataset.axp);save();const a=levelOf(totalXP());toast(a>b?`Level ${a} reached`:`+${axp.dataset.axp} XP`);render();return;}
   const at=e.target.closest("[data-atier]");if(at&&adminOn()){const need=xpFor(TIERS[+at.dataset.atier][1])-baseXP();S.adminXP=Math.max(0,need);save();toast(need<0?"You've already earned past that rank":`Now ${TIERS[+at.dataset.atier][0]}`);render();return;}
+  const chb=e.target.closest("[data-chest]");if(chb&&!chb.disabled){openChest(chb);return;}
+  const qc=e.target.closest("[data-qclaim]");if(qc){const wk=weekStart(TODAY),q=QUESTS.find(x=>x.id===qc.dataset.qclaim);if(q&&q.m(wk)>=q.n&&!questClaimed(wk,q.id)){(S.days[TODAY]=S.days[TODAY]||{})["q:"+wk+":"+q.id]=[QUEST_XP,"discipline"];save();track("quest");banner(LANG==="es"?q.tes:q.t,`+${QUEST_XP} XP`,3,"Quest complete");render();}return;}
   const id=e.target.id;
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
   if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}

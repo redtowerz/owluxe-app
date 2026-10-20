@@ -825,7 +825,7 @@ function viewToday(){
       <div class="progress"><i style="width:${list.length?done/list.length*100:0}%"></i></div>
       <div class="list">${list.map(c=>`<button class="task ${m[c.key]?"done":""}" data-key="${esc(c.key)}" aria-pressed="${!!m[c.key]}">
         <span class="check"><svg viewBox="0 0 16 16" fill="none" stroke="var(--on-gold)" stroke-width="2.5"><path d="M3 8.5l3 3 7-7"/></svg></span>
-        <span class="t-body"><span class="t-title">${esc(c.t)}</span><span class="t-meta"><span class="dot" style="--c:var(${CATS[c.cat].c})"></span>${CATS[c.cat].n}${c.bonus?` <span class="tag">2× ${esc(c.bonus)}</span>`:""}${c.custom?' <span class="tag">My habit</span>':""}${c.event?' <span class="tag">Owluxe event</span>':""}${c.program?' <span class="tag">Program</span>':""}</span></span>
+        <span class="t-body"><span class="t-title">${esc(c.t)}</span><span class="t-meta"><span class="dot" style="--c:var(${CATS[c.cat].c})"></span>${CATS[c.cat].n}${c.bonus?` <span class="tag">2× ${esc(c.bonus)}</span>`:""}${c.custom?' <span class="tag">My habit</span>':""}${c.event?' <span class="tag">Owluxe event</span>':""}${c.program?` <span class="tag" data-notr>${esc(c.progName||"Program")}</span>`:""}</span></span>
         <span class="xp">+${c.xp}</span></button>`).join("")}</div>
       <p class="empty">Finish ${DAILY_GOAL} to keep your streak. Miss a day and a streak freeze covers it, ${FREEZES_PER_WEEK} per week.</p></section>
     ${questsCard()}
@@ -1305,7 +1305,7 @@ const daysBetween=(a,b)=>Math.round((D(b)-D(a))/864e5);
 const curProg=()=>S.program?PROGRAMS.find(x=>x.id===S.program.id):null;
 const progDay=(date=TODAY)=>S.program?daysBetween(S.program.start,date)+1:0;
 function progTasks(date){const p=curProg();if(!p)return [];const i=progDay(date);if(i<1||i>p.days)return [];
-  return p.day(i).map((t,j)=>({cat:t[2],t:LANG==="es"?t[1]:t[0],xp:t[3],program:true,key:`p:${p.id}:${i}:${j}`}));}
+  return p.day(i).map((t,j)=>({cat:t[2],t:LANG==="es"?t[1]:t[0],xp:t[3],program:true,progName:pn(p),progId:p.id,key:`p:${p.id}:${i}:${j}`}));}
 function checkProgramDone(){const p=curProg();if(!p)return;const i=progDay();if(i!==p.days)return;const ts=progTasks(TODAY),m=dayMap(TODAY);
   if(ts.length&&ts.every(x=>m[x.key])&&!m["pb:"+p.id]){S.days[TODAY]["pb:"+p.id]=[p.xp,"discipline"];S.progDone[p.id]=TODAY;S.program=null;track("program-done");setTimeout(()=>toast(LANG==="es"?`¡Programa completado! +${p.xp} XP`:`Program complete! +${p.xp} XP`),1200);}}
 function progPicker(){const pick=["soft75","pushup30","reset30","run5k"].map(id=>PROGRAMS.find(p=>p.id===id)).filter(Boolean);

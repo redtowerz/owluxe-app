@@ -1251,7 +1251,9 @@ function progTasks(date){const p=curProg();if(!p)return [];const i=progDay(date)
   return p.day(i).map((t,j)=>({cat:t[2],t:LANG==="es"?t[1]:t[0],xp:t[3],program:true,key:`p:${p.id}:${i}:${j}`}));}
 function checkProgramDone(){const p=curProg();if(!p)return;const i=progDay();if(i!==p.days)return;const ts=progTasks(TODAY),m=dayMap(TODAY);
   if(ts.length&&ts.every(x=>m[x.key])&&!m["pb:"+p.id]){S.days[TODAY]["pb:"+p.id]=[p.xp,"discipline"];S.progDone[p.id]=TODAY;S.program=null;track("program-done");setTimeout(()=>toast(LANG==="es"?`¡Programa completado! +${p.xp} XP`:`Program complete! +${p.xp} XP`),1200);}}
-function progCard(){const p=curProg();if(!p)return "";const i=progDay();if(i<1||i>p.days)return "";
+function progPicker(){return `<section class="card"><div class="spread"><span class="label">Start a program</span><button class="btn ghost sm" data-goprog="1">See all</button></div>
+    ${PROGRAMS.map(p=>{const locked=p.premium&&!isPro();return `<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(pn(p))}</b>${p.premium?' <span class="tag">Pro</span>':""} <span class="small muted">${p.days} days</span></span>${locked?`<button class="btn ghost sm" data-tab="rank">Unlock with Pro</button>`:`<button class="btn sm" data-pstart="${p.id}">Start</button>`}</div></div>`;}).join("")}</section>`;}
+function progCard(){const p=curProg();if(!p)return progPicker();const i=progDay();if(i<1||i>p.days)return "";
   return `<section class="card"><div class="spread"><div style="min-width:0"><span class="label">Program</span><p style="font-weight:500">${esc(pn(p))}</p></div><span class="small muted">Day ${i} of ${p.days}</span></div><div class="progress"><i style="width:${i/p.days*100}%"></i></div></section>`;}
 function programsSection(){const cur=curProg();
   return `<section class="sec">${head(3,"Programs")}<div class="card">${PROGRAMS.map(p=>{const on=cur&&cur.id===p.id,locked=p.premium&&!isPro(),done=S.progDone&&S.progDone[p.id];
@@ -1613,6 +1615,7 @@ document.addEventListener("click",async e=>{
   const at=e.target.closest("[data-atier]");if(at&&adminOn()){const need=xpFor(TIERS[+at.dataset.atier][1])-baseXP();S.adminXP=Math.max(0,need);save();toast(need<0?"You've already earned past that rank":`Now ${TIERS[+at.dataset.atier][0]}`);render();return;}
   const chb=e.target.closest("[data-chest]");if(chb&&!chb.disabled){openChest(chb);return;}
   const qc=e.target.closest("[data-qclaim]");if(qc){const wk=weekStart(TODAY),q=QUESTS.find(x=>x.id===qc.dataset.qclaim);if(q&&q.m(wk)>=q.n&&!questClaimed(wk,q.id)){(S.days[TODAY]=S.days[TODAY]||{})["q:"+wk+":"+q.id]=[QUEST_XP,"discipline"];save();track("quest");banner(LANG==="es"?q.tes:q.t,`+${QUEST_XP} XP`,3,"Quest complete");render();}return;}
+  if(e.target.closest("[data-goprog]")){tab="train";render();setTimeout(()=>{const h=[...document.querySelectorAll("h2")].find(x=>/^(Programs|Programas)$/.test(x.textContent));if(h)h.scrollIntoView({block:"start"});},50);return;}
   const id=e.target.id;
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
   if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}

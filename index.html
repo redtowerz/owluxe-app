@@ -212,6 +212,14 @@ body.light{--bg:#f4f2e6;--surface:#fbfaf4;--surface-2:#e8e4d6;--line:#d5cfbd;--f
 body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .pro-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
 .offline{display:inline-block;margin-top:4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--warn);color:var(--warn);padding:1px 6px;border-radius:99px}
+.hdr-r{display:flex;align-items:center;gap:12px;min-width:0}
+.hdr-ctl{display:flex;align-items:center;gap:6px}
+.lang-tg{display:flex;border:1px solid var(--line);border-radius:99px;padding:2px;background:var(--surface)}
+.lang-tg button{border:0;background:none;border-radius:99px;padding:5px 9px;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.lang-tg button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold)}
+.theme-tg{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;padding:0}
+.theme-tg svg{width:17px;height:17px}
+@media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -222,7 +230,7 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
       <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true" fill="var(--fg)"><path d="M6 12 C40 20 66 34 76 48 L72 22 C88 40 96 64 94 90 C86 66 72 50 52 38 C66 46 72 54 74 60 C60 52 40 40 6 12Z"/><path d="M40 40 C26 46 22 64 32 74 C40 82 56 82 66 74 C54 78 42 74 38 64 C35 56 36 48 40 40Z"/><path d="M48 56 C46 64 50 70 58 70 L62 66 C56 64 50 60 48 56Z"/></svg>
       <h1 style="font-size:22px">Owluxe</h1>
     </div>
-    <div class="date" id="date"></div>
+    <div class="hdr-r"><div class="date" id="date"></div><div class="hdr-ctl" id="hdr-ctl"></div></div>
   </header>
   <main id="view" class="view"></main>
 </div>
@@ -477,7 +485,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -793,8 +801,6 @@ function viewRank(){
       ${REWARDS.map(r=>{const open=rewardOpen(r);return `<div class="reward ${open?"":"locked"}"><div style="min-width:0"><b style="font-weight:500">${esc(r.t)}</b><p class="small muted">${r.lv?`Reach level ${r.lv}`:r.refs?`Invite ${r.refs} friends who join`:`Hit a ${r.streak}-day streak`}</p>${open?`<p style="margin-top:6px"><span class="code">${esc(r.code)}</span></p>`:""}</div>${open?`<button class="btn sm" data-copy="${esc(r.code)}">Copy</button>`:`<span class="small muted">Locked</span>`}</div>`}).join("")}</div></section>
     <section class="sec">${head(6,"Prestige Ranks")}<div class="card"><div class="tiers">${TIERS.map(([n,l],i)=>`<div class="tier ${i===ti?"on":""}"><span class="row" style="flex-wrap:nowrap;gap:12px">${badge(i,48,lv<l)}<span style="display:flex;flex-direction:column"><b style="color:${lv<l?"var(--muted)":"var(--fg)"}">${n}</b><span style="font-size:12px">${lv>=l?(i===ti?"Current rank":"Unlocked"):"Locked"}</span></span></span><span class="num">Lv ${l}+</span></div>`).join("")}</div></div></section>
     <section class="sec">${head(7,"Settings")}<div class="card"><p class="small">${syncState==="synced"?"Progress is synced to your claude.ai account, on every device.":(STANDALONE?"Progress, photos and journal are saved on this device and browser only.":"Progress is saved on this device. Sign in to claude.ai to sync it across devices.")}</p>
-      <div class="spread"><span class="label">Language</span><div class="seg" style="width:160px" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${LANG==="en"}">English</button><button data-lang="es" aria-pressed="${LANG==="es"}">Español</button></div></div>
-      <div class="spread"><span class="label">Appearance</span><div class="seg" style="width:160px" role="group" aria-label="Appearance"><button data-theme-set="dark" aria-pressed="${S.theme!=="light"}">Dark</button><button data-theme-set="light" aria-pressed="${S.theme==="light"}">Light</button></div></div>
       <div><span class="label">Backup</span><p class="small muted">Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.</p>
         <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="bk-export">Download backup</button><button class="btn ghost sm" id="bk-import">Restore from backup</button></div></div>
       <button class="btn ghost" id="reset" style="align-self:flex-start">${resetArmed?"Tap again to reset challenges, XP and journal":"Reset progress"}</button><p class="small muted">Reset keeps your progress photos.</p></div></section>`;
@@ -1207,6 +1213,10 @@ async function importBackup(file){try{const data=JSON.parse(await file.text());i
 /* ---------- render ---------- */
 function render(){
   $("#date").innerHTML=esc(fmt(TODAY,{weekday:"long"}))+"<br>"+esc(fmt(TODAY,{month:"long",day:"numeric"}))+(navigator.onLine===false?'<br><span class="offline">Offline</span>':"");
+  $("#hdr-ctl").innerHTML=`<div class="lang-tg" role="group" aria-label="Language"><button data-lang="en" aria-pressed="${LANG==="en"}" lang="en">EN</button><button data-lang="es" aria-pressed="${LANG==="es"}" lang="es">ES</button></div>
+    <button class="theme-tg" data-theme-toggle="1" aria-label="${S.theme==="light"?"Switch to dark mode":"Switch to light mode"}" title="${S.theme==="light"?"Dark mode":"Light mode"}">${S.theme==="light"
+      ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>'
+      :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>'}</button>`;
   $("#tabs").innerHTML=TABS.map(([k,n])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}${n}</button>`).join("");
   const kept={};document.querySelectorAll("[data-keep]").forEach(el=>{if(el.id&&el.value)kept[el.id]=el.value;}); const keep=$("#jtext")?.value, keepC=$("#cust-t")?.value, keepW=$("#w-in")?.value, keepN=$("#w-note")?.value;
   $("#view").innerHTML={today:viewToday,train:viewTrain,stats:viewStats,crew:viewCrew,journal:viewJournal,rank:viewRank}[tab]();
@@ -1316,7 +1326,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#fm-ai")){aiFill();return;}
   const fdl=e.target.closest("[data-fdel]");if(fdl){const fid=fdl.dataset.fdel;if(foodDel===fid){S.food[TODAY]=foodDay(TODAY).filter(x=>x.id!==fid);foodDel="";save();}else foodDel=fid;render();return;}
   const lg=e.target.closest("[data-lang]");if(lg){LANG=S.lang=lg.dataset.lang;applyTheme();save();track("lang-"+LANG);render();return;}
-  const th=e.target.closest("[data-theme-set]");if(th){S.theme=th.dataset.themeSet;applyTheme();save();render();return;}
+  if(e.target.closest("[data-theme-toggle]")){S.theme=S.theme==="light"?"dark":"light";applyTheme();save();render();return;}
   const rsv=e.target.closest("[data-rsave]");if(rsv){const w=(S.workouts||[]).find(x=>x.id===rsv.dataset.rsave);if(w&&saveRoutine(w.name||w.type,w.type,w.ex))render();return;}
   const rst=e.target.closest("[data-rstart]");if(rst){const r=(S.routines||[]).find(x=>x.id===rst.dataset.rstart);if(r){if(S.active){toast(LANG==="es"?"Termina o descarta tu entreno actual primero":"Finish or discard your current workout first");return;}startRoutine(r);}return;}
   const rdl=e.target.closest("[data-rdel]");if(rdl){const rid=rdl.dataset.rdel;if(rDelArmed===rid){S.routines=S.routines.filter(x=>x.id!==rid);rDelArmed="";save();}else rDelArmed=rid;render();return;}

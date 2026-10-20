@@ -287,6 +287,15 @@ body.light .pacer{background:color-mix(in srgb,var(--bg) 97%,transparent)}
 .ach-tile b{font-size:12px;font-weight:500;line-height:1.2}
 .ach-tile span{font-size:10.5px;color:var(--muted);line-height:1.25}
 .ach-tile.lock{opacity:.5}
+.sheet-bg{position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;animation:lvFade .2s ease both}
+.sheet{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;animation:sheetUp .35s cubic-bezier(.2,1,.3,1) both}
+.sheet-grab{width:40px;height:4px;border-radius:99px;background:var(--line);margin:0 auto}
+.sheet-day{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.sheet-day:first-child{border-top:0}
+.sheet-day ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.prog-name{background:none;border:0;padding:0;text-align:left;color:inherit;font-weight:500;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;cursor:pointer}
+.prog-group{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-2);margin-top:6px}
+@keyframes sheetUp{from{transform:translateY(100%)}}
 @media (max-width:400px){.date{font-size:11px}.hdr-r{gap:8px}}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -448,6 +457,47 @@ const PROGRAMS = [
      return [["Walk 30 minutes or cross-train","Camina 30 minutos o haz otro deporte","physical",15],st];}},
 ];
 
+/* Popular challenges. Same format as PROGRAMS; kind:"challenge" groups them separately. */
+PROGRAMS.push(
+  {id:"soft75", kind:"challenge", n:"75 Soft", nes:"75 Soft", days:75, xp:750, premium:true,
+   d:"The popular, sustainable version of 75 Hard: one workout a day, good food, water and reading for 75 days.",
+   des:"La versión popular y sostenible de 75 Hard: un entreno al día, buena comida, agua y lectura durante 75 días.",
+   day:i=>[[i%7===0?"Active recovery: 45-minute walk, stretch or yoga":"Workout for 45 minutes",i%7===0?"Recuperación activa: 45 minutos de caminata, estiramiento o yoga":"Entrena 45 minutos","physical",20],
+     ["Eat well. Alcohol only at social events","Come bien. Alcohol solo en eventos sociales","discipline",15],["Drink 3 liters of water","Toma 3 litros de agua","discipline",10],["Read 10 pages","Lee 10 páginas","mind",10]]},
+  {id:"hard75", kind:"challenge", n:"75-Day Hard Mode", nes:"Modo Difícil 75 días", days:75, xp:1500, premium:true,
+   d:"Inspired by the viral 75 Hard challenge: two workouts a day, strict diet, a gallon of water, reading and a daily progress photo. No days off.",
+   des:"Inspirado en el viral reto 75 Hard: dos entrenos al día, dieta estricta, un galón de agua, lectura y una foto de progreso diaria. Sin días libres.",
+   note:"This is intense. Check with a doctor first if you have a health condition, and scale the workouts to your level.",
+   notees:"Es intenso. Consulta a un médico antes si tienes alguna condición de salud y adapta los entrenos a tu nivel.",
+   day:i=>[["Workout 1: 45 minutes","Entreno 1: 45 minutos","physical",15],["Workout 2: 45 minutes, outdoors","Entreno 2: 45 minutos, al aire libre","physical",15],
+     ["Follow your diet: no cheat meals, no alcohol","Sigue tu dieta: sin comidas trampa ni alcohol","discipline",15],["Drink 1 gallon (3.8 L) of water","Toma 1 galón (3,8 L) de agua","discipline",10],
+     ["Read 10 pages of nonfiction","Lee 10 páginas de no ficción","mind",10],["Take a progress photo","Tómate una foto de progreso","discipline",10]]},
+  {id:"pushup30", kind:"challenge", n:"30-Day Push-up Challenge", nes:"Reto de lagartijas 30 días", days:30, xp:300, premium:false,
+   d:"Start at 10 push-ups and add 3 every day. Split them into as many sets as you need.",
+   des:"Empieza con 10 lagartijas y suma 3 cada día. Divídelas en las series que necesites.",
+   day:i=>[[`${10+(i-1)*3} push-ups today, any sets`,`${10+(i-1)*3} lagartijas hoy, en las series que quieras`,"physical",20],["Stretch chest and shoulders for 5 minutes","Estira pecho y hombros 5 minutos","physical",5]]},
+  {id:"plank30", kind:"challenge", n:"30-Day Plank Challenge", nes:"Reto de plancha 30 días", days:30, xp:300, premium:false,
+   d:"Build a rock-solid core. Start with a 20-second plank and add 5 seconds a day, with a rest day each week.",
+   des:"Construye un core de acero. Empieza con 20 segundos de plancha y suma 5 por día, con un día de descanso por semana.",
+   day:i=>[i%7===0?["Rest day: light stretching","Día de descanso: estiramiento suave","physical",10]:[`Hold a plank for ${20+(i-1)*5} seconds`,`Mantén la plancha ${20+(i-1)*5} segundos`,"physical",20]]},
+  {id:"squat30", kind:"challenge", n:"30-Day Squat Challenge", nes:"Reto de sentadillas 30 días", days:30, xp:300, premium:false,
+   d:"Stronger legs in a month. Start at 20 bodyweight squats and add 5 a day, with a rest day each week.",
+   des:"Piernas más fuertes en un mes. Empieza con 20 sentadillas y suma 5 por día, con un día de descanso por semana.",
+   day:i=>[i%7===0?["Rest day: walk and stretch","Día de descanso: camina y estira","physical",10]:[`${20+(i-1)*5} bodyweight squats, any sets`,`${20+(i-1)*5} sentadillas con tu peso, en las series que quieras`,"physical",20]]},
+  {id:"steps30", kind:"challenge", n:"10K Steps for 30 Days", nes:"10.000 pasos por 30 días", days:30, xp:300, premium:false,
+   d:"Walk 10,000 steps every day for a month. Simple, and it adds up.",
+   des:"Camina 10.000 pasos cada día durante un mes. Simple, y suma mucho.",
+   day:i=>[["Walk 10,000 steps","Camina 10.000 pasos","physical",20],[i%2?"Take the stairs at least once":"Walk after one meal","Usa las escaleras al menos una vez",  "physical",5].map((v,k)=>k===1&&!(i%2)?"Camina después de una comida":v)]},
+  {id:"cold30", kind:"challenge", n:"30-Day Cold Shower Challenge", nes:"Reto de ducha fría 30 días", days:30, xp:300, premium:false,
+   d:"Train your discipline. End every shower cold, starting at 30 seconds and building to 3 minutes.",
+   des:"Entrena tu disciplina. Termina cada ducha con agua fría, de 30 segundos hasta 3 minutos.",
+   day:i=>[[`End your shower with ${Math.min(180,30+(i-1)*6)} seconds of cold water`,`Termina tu ducha con ${Math.min(180,30+(i-1)*6)} segundos de agua fría`,"discipline",20]]},
+  {id:"nosugar30", kind:"challenge", n:"30-Day No Sugar", nes:"30 días sin azúcar", days:30, xp:300, premium:false,
+   d:"Cut added sugar for 30 days. Daily tasks keep you on track and help you spot hidden sugar.",
+   des:"Elimina el azúcar añadido por 30 días. Las tareas diarias te mantienen en camino y te ayudan a detectar el azúcar oculto.",
+   day:i=>[["No added sugar today","Hoy sin azúcar añadido","discipline",20],[["Drink only water, coffee or tea","Read one food label before you eat","Prep a sugar-free snack"][(i-1)%3],["Toma solo agua, café o té","Lee una etiqueta antes de comer","Prepara un snack sin azúcar"][(i-1)%3],"discipline",10]]},
+);
+
 /* Common foods for autofill: [name, serving, calories, protein g, carbs g, fat g] */
 const FOODS = [
   ["Egg, large","1 egg",72,6,0,5],["Egg whites","3 tbsp",25,5,0,0],["Chicken breast, cooked","4 oz",187,35,0,4],["Chicken thigh, cooked","4 oz",230,28,0,13],
@@ -563,7 +613,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","Details":"Detalles","Length":"Duración","Tasks a day":"Tareas al día","Completion bonus":"Bono al terminar","First week":"Primera semana","Final week":"Última semana","Start this program":"Empezar este programa","Start this challenge":"Empezar este reto","Starting replaces your current program.":"Empezar reemplaza tu programa actual.","Popular challenges":"Retos populares","Popular Challenges":"Retos populares","Challenge":"Reto","Start a program or challenge":"Empieza un programa o reto","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -600,7 +650,7 @@ const ES_RX=[
  [/^Showing (\d+) of (\d+)\. Search to narrow it down\.$/,"Mostrando $1 de $2. Busca para filtrar."],[/^Show more \((\d+)\)$/,"Ver más ($1)"],[/^(\d+) moves$/,"$1 ejercicios"],
  [/^Reward unlocked: (.+)$/,(m,a)=>"Premio desbloqueado: "+tr(a)],[/^Hit your daily goal to unlock it \((\d+)\/(\d+)\)\.$/,"Cumple tu meta diaria para abrirlo ($1/$2)."],[/^Resets in (\d+) days?$/,(m,a)=>`Se reinicia en ${a} día${a==="1"?"":"s"}`],[/^Claim \+(\d+)$/,"Reclamar +$1"],
  [/^(\d+) of (\d+) unlocked$/,"$1 de $2 desbloqueados"],[/^Every task done · \+(\d+) XP$/,"Todas las tareas hechas · +$1 XP"],[/^Milestone bonus · \+(\d+) XP$/,"Bono de hito · +$1 XP"],[/^(\d+)-Day Streak$/,"Racha de $1 días"],[/^(\d+) achievements$/,"$1 logros"],
- [/^\+(\d+) XP · See them in Profile$/,"+$1 XP · Míralos en Perfil"],[/^Chest opened · (.+)$/,(m,a)=>"Cofre abierto · "+tr(a)],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
+ [/^\+(\d+) XP · See them in Profile$/,"+$1 XP · Míralos en Perfil"],[/^Chest opened · (.+)$/,(m,a)=>"Cofre abierto · "+tr(a)],[/^Day (\d+)$/,"Día $1"],[/^You're in this (program|challenge) · Day (\d+) of (\d+)$/,(m,a,b,c)=>`Ya estás en este ${a==="program"?"programa":"reto"} · Día ${b} de ${c}`],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
 ];
 function tr(s){if(LANG!=="es"||!s)return s;const k=s.trim();if(!k)return s;if(ES[k]!=null)return s.replace(k,ES[k]);for(const [r,f] of ES_RX){if(r.test(k))return s.replace(k,k.replace(r,f));}return s;}
 function trTree(root){if(LANG!=="es"||!root)return;if(root.nodeType===3){const v=root.nodeValue,n=tr(v);if(n!==v)root.nodeValue=n;return;}if(root.nodeType!==1)return;
@@ -1251,16 +1301,35 @@ function progTasks(date){const p=curProg();if(!p)return [];const i=progDay(date)
   return p.day(i).map((t,j)=>({cat:t[2],t:LANG==="es"?t[1]:t[0],xp:t[3],program:true,key:`p:${p.id}:${i}:${j}`}));}
 function checkProgramDone(){const p=curProg();if(!p)return;const i=progDay();if(i!==p.days)return;const ts=progTasks(TODAY),m=dayMap(TODAY);
   if(ts.length&&ts.every(x=>m[x.key])&&!m["pb:"+p.id]){S.days[TODAY]["pb:"+p.id]=[p.xp,"discipline"];S.progDone[p.id]=TODAY;S.program=null;track("program-done");setTimeout(()=>toast(LANG==="es"?`¡Programa completado! +${p.xp} XP`:`Program complete! +${p.xp} XP`),1200);}}
-function progPicker(){return `<section class="card"><div class="spread"><span class="label">Start a program</span><button class="btn ghost sm" data-goprog="1">See all</button></div>
-    ${PROGRAMS.map(p=>{const locked=p.premium&&!isPro();return `<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(pn(p))}</b>${p.premium?' <span class="tag">Pro</span>':""} <span class="small muted">${p.days} days</span></span>${locked?`<button class="btn ghost sm" data-tab="rank">Unlock with Pro</button>`:`<button class="btn sm" data-pstart="${p.id}">Start</button>`}</div></div>`;}).join("")}</section>`;}
+function progPicker(){const pick=["soft75","pushup30","reset30","run5k"].map(id=>PROGRAMS.find(p=>p.id===id)).filter(Boolean);
+  return `<section class="card"><div class="spread"><span class="label">Start a program or challenge</span><button class="btn ghost sm" data-goprog="1">See all</button></div>
+    ${pick.map(p=>{const locked=p.premium&&!isPro();return `<div class="entry"><div class="spread"><span style="min-width:0"><button class="prog-name" data-pinfo="${p.id}">${esc(pn(p))}</button>${p.premium?' <span class="tag">Pro</span>':""} <span class="small muted">${p.days} days</span></span><button class="btn ghost sm" data-pinfo="${p.id}">Details</button></div></div>`;}).join("")}</section>`;}
+function progSheet(id){const p=PROGRAMS.find(x=>x.id===id);if(!p)return;closeSheet();
+  const locked=p.premium&&!isPro(),on=curProg()&&curProg().id===p.id,isCh=p.kind==="challenge",perDay=Math.max(...[...Array(Math.min(7,p.days))].map((_,k)=>p.day(k+1).length));
+  const dayRows=from=>[...Array(7)].map((_,k)=>from+k).filter(d=>d>=1&&d<=p.days).map(d=>`<div class="sheet-day"><span class="label">Day ${d}</span><ul>${p.day(d).map(t=>`<li>${esc(LANG==="es"?t[1]:t[0])} <span class="small muted">+${t[3]}</span></li>`).join("")}</ul></div>`).join("");
+  const note=LANG==="es"?p.notees:p.note;
+  const el=document.createElement("div");el.className="sheet-bg";
+  el.innerHTML=`<div class="sheet" role="dialog" aria-label="${esc(pn(p))}"><div class="sheet-grab"></div>
+    <div class="spread"><div style="min-width:0"><span class="label">${isCh?"Challenge":"Program"}${p.premium?" · Pro":""}</span><h2 style="font-size:26px;margin-top:4px">${esc(pn(p))}</h2></div><button class="btn ghost sm" data-sheetclose="1">Close</button></div>
+    <p>${esc(pd(p))}</p>
+    <div class="stats"><div class="stat"><span class="label">Length</span><b>${p.days}</b><span class="small muted">days</span></div><div class="stat"><span class="label">Tasks a day</span><b>${perDay}</b></div><div class="stat"><span class="label">Completion bonus</span><b>+${p.xp}</b><span class="small muted">XP</span></div></div>
+    ${note?`<p class="note">${esc(note)}</p>`:""}
+    <div><span class="label">First week</span><div>${dayRows(1)}</div></div>
+    ${p.days>14?`<div><span class="label">Final week</span><div>${dayRows(p.days-6)}</div></div>`:""}
+    ${on?`<p class="note">You're in this ${isCh?"challenge":"program"} · Day ${progDay()} of ${p.days}</p>`
+      :locked?`<button class="btn" data-tab="rank" data-sheetclose="1">Unlock with Pro</button>`
+      :`${curProg()?'<p class="small muted">Starting replaces your current program.</p>':""}<button class="btn" data-pstart="${p.id}" data-sheetclose="1">${isCh?"Start this challenge":"Start this program"}</button>`}</div>`;
+  el.addEventListener("click",ev=>{if(ev.target===el)closeSheet();});document.body.appendChild(el);}
+function closeSheet(){document.querySelectorAll(".sheet-bg").forEach(x=>x.remove());}
 function progCard(){const p=curProg();if(!p)return progPicker();const i=progDay();if(i<1||i>p.days)return "";
   return `<section class="card"><div class="spread"><div style="min-width:0"><span class="label">Program</span><p style="font-weight:500">${esc(pn(p))}</p></div><span class="small muted">Day ${i} of ${p.days}</span></div><div class="progress"><i style="width:${i/p.days*100}%"></i></div></section>`;}
-function programsSection(){const cur=curProg();
-  return `<section class="sec">${head(3,"Programs")}<div class="card">${PROGRAMS.map(p=>{const on=cur&&cur.id===p.id,locked=p.premium&&!isPro(),done=S.progDone&&S.progDone[p.id];
-    return `<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(pn(p))}</b>${p.premium?' <span class="tag">Pro</span>':""}</span><span class="small muted">${p.days} days</span></div><p class="small muted">${esc(pd(p))}</p>
-    ${on?`<div class="row"><span class="small" style="color:var(--gold-2)">Day ${progDay()} of ${p.days}</span><button class="btn ghost sm" data-pleave="1">${leaveArmed?"Tap to leave":"Leave program"}</button></div>`
-      :locked?`<button class="btn ghost sm" data-tab="rank" style="align-self:flex-start">Unlock with Pro</button>`
-      :`<button class="btn sm" data-pstart="${p.id}" style="align-self:flex-start">${done?"Start again":"Start program"}</button>`}</div>`;}).join("")}</div></section>`;}
+function progRow(p){const cur=curProg(),on=cur&&cur.id===p.id,locked=p.premium&&!isPro(),done=S.progDone&&S.progDone[p.id];
+  return `<div class="entry"><div class="spread"><span style="min-width:0"><button class="prog-name" data-pinfo="${p.id}">${esc(pn(p))}</button>${p.premium?' <span class="tag">Pro</span>':""}</span><span class="small muted">${p.days} days</span></div><p class="small muted">${esc(pd(p))}</p>
+    ${on?`<div class="row"><span class="small" style="color:var(--gold-2)">Day ${progDay()} of ${p.days}</span><button class="btn ghost sm" data-pinfo="${p.id}">Details</button><button class="btn ghost sm" data-pleave="1">${leaveArmed?"Tap to leave":"Leave program"}</button></div>`
+      :`<div class="row">${locked?`<button class="btn ghost sm" data-tab="rank">Unlock with Pro</button>`:`<button class="btn sm" data-pstart="${p.id}">${done?"Start again":"Start program"}</button>`}<button class="btn ghost sm" data-pinfo="${p.id}">Details</button></div>`}</div>`;}
+function programsSection(){
+  const ch=PROGRAMS.filter(p=>p.kind==="challenge"),pr=PROGRAMS.filter(p=>p.kind!=="challenge");
+  return `<section class="sec">${head(3,"Programs")}<div class="card"><span class="prog-group">Popular challenges</span>${ch.map(progRow).join("")}<span class="prog-group" style="margin-top:14px">Programs</span>${pr.map(progRow).join("")}</div></section>`;}
 
 /* ---------- exercise progress (Pro) ---------- */
 function lineChart(pts,unit){if(pts.length<2)return `<p class="empty">Log an exercise in two or more workouts to see a trend.</p>`;
@@ -1559,6 +1628,8 @@ async function deletePhoto(id){
 
 /* ---------- events ---------- */
 document.addEventListener("click",async e=>{
+  const pinf=e.target.closest("[data-pinfo]");if(pinf){progSheet(pinf.dataset.pinfo);return;}
+  if(e.target.closest("[data-sheetclose]")){closeSheet();if(!e.target.closest("[data-pstart],[data-tab]"))return;}
   const t=e.target.closest("[data-tab]");
   if(t){tab=t.dataset.tab;resetArmed=false;confirmDel="";try{localStorage.setItem(KEY+".tab",tab);}catch(_){}render();scrollTo(0,0);return;}
   const task=e.target.closest(".task");
@@ -1615,6 +1686,7 @@ document.addEventListener("click",async e=>{
   const at=e.target.closest("[data-atier]");if(at&&adminOn()){const need=xpFor(TIERS[+at.dataset.atier][1])-baseXP();S.adminXP=Math.max(0,need);save();toast(need<0?"You've already earned past that rank":`Now ${TIERS[+at.dataset.atier][0]}`);render();return;}
   const chb=e.target.closest("[data-chest]");if(chb&&!chb.disabled){openChest(chb);return;}
   const qc=e.target.closest("[data-qclaim]");if(qc){const wk=weekStart(TODAY),q=QUESTS.find(x=>x.id===qc.dataset.qclaim);if(q&&q.m(wk)>=q.n&&!questClaimed(wk,q.id)){(S.days[TODAY]=S.days[TODAY]||{})["q:"+wk+":"+q.id]=[QUEST_XP,"discipline"];save();track("quest");banner(LANG==="es"?q.tes:q.t,`+${QUEST_XP} XP`,3,"Quest complete");render();}return;}
+  if(e.target.closest("[data-goprog]")){tab="train";render();setTimeout(()=>{const h=[...document.querySelectorAll("h2")].find(x=>/^(Programs|Programas)$/.test(x.textContent));if(h)h.scrollIntoView({block:"start"});},50);return;}
   if(e.target.closest("[data-goprog]")){tab="train";render();setTimeout(()=>{const h=[...document.querySelectorAll("h2")].find(x=>/^(Programs|Programas)$/.test(x.textContent));if(h)h.scrollIntoView({block:"start"});},50);return;}
   const id=e.target.id;
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}

@@ -1,5 +1,5 @@
 /* Owluxe offline support: keeps the app working with no signal. Bump VERSION to force an update. */
-const VERSION = "owluxe-v6";
+const VERSION = "owluxe-v7";
 const CORE = ["./", "index.html", "manifest.webmanifest", "favicon.svg", "favicon.ico", "favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

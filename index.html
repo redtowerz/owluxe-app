@@ -327,6 +327,14 @@ body.light{--mood1:#787262;--mood2:#958d7c;--mood3:#6f9a90;--mood4:#3f6f84;--moo
 .prof-btn svg{width:17px;height:17px}
 .prof-btn[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 @media (max-width:440px){.date{display:none}.hdr-r{gap:8px}}
+.eq-sum{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.eq-sum p{margin:0;min-width:0}
+.gen-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto 38px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.gen-row:first-child{border-top:0}
+.gen-row .gn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.gen-row .gs{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--gold-2);white-space:nowrap}
+.gen-row .iconbtn svg{width:16px;height:16px}
+.seg.four{grid-template-columns:repeat(4,1fr)}
 @media (max-width:400px){.cat{grid-template-columns:84px 1fr auto}.crest{grid-template-columns:1fr;justify-items:start}.stats{grid-template-columns:1fr 1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -439,6 +447,16 @@ const MAX_CUSTOM = 6;
 const WORKOUT_XP = {perMinute:1, perSet:3, maxPerWorkout:150, minMinutes:5};
 const WORKOUT_TYPES = ["Strength","Cardio","HIIT","Mobility","Sport"];
 const REST_OPTIONS = [0,30,60,90,120,180];   // seconds; 0 = off
+
+/* Workout Builder: equipment people can pick, and quick presets */
+const EQUIPMENT = ["Dumbbells","Barbell","Bench","Kettlebell","Pull-up bar","Cable","Machines","Treadmill","Bike","Rower","Jump rope","Box","Med ball","Ab wheel","Battle ropes","Sled","Pool","Foam roller"];
+const EQUIP_PRESETS = {
+  "No equipment": [],
+  "Home dumbbells": ["Dumbbells","Bench","Pull-up bar","Jump rope"],
+  "Hotel gym": ["Dumbbells","Bench","Treadmill","Bike"],
+  "Full gym": ["Dumbbells","Barbell","Bench","Kettlebell","Pull-up bar","Cable","Machines","Treadmill","Bike","Rower","Jump rope","Box","Med ball","Ab wheel","Battle ropes","Sled","Foam roller"],
+};
+const GEN_LENGTHS = [20,30,45,60];   // minutes
 
 /* Owluxe Pro (paid tier). checkoutUrl = your Stripe Payment Link (or any checkout page).
    codeHashes = SHA-256 of each unlock code, written as UPPERCASE letters and numbers only. */
@@ -607,7 +625,7 @@ const METALS = [["#5f5a4d","#a9a291"],["#6e4b30","#c99464"],["#7d8282","#eef0ee"
 const STANDALONE=!(window.claude&&typeof window.claude.use==="function");
 const CATS = {physical:{n:"Physical",c:"--phys"},mind:{n:"Mind",c:"--mind"},social:{n:"Social",c:"--soc"},discipline:{n:"Discipline",c:"--disc"}};
 const KEY="owluxe.v2";
-const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0,ach:{},milestones:{},moods:{}});
+const blank=()=>({v:2,focus:"",crew:"",unit:"lb",days:{},frozen:{},custom:[],journal:[],workouts:[],customEx:[],active:null,paceSec:3,food:{},calTarget:0,refBy:"",routines:[],program:null,progDone:{},pro:false,lang:"",theme:"dark",adminXP:0,admin:false,seenLevel:0,ach:{},milestones:{},moods:{},equipment:null,gen:null,genGoal:"full",genLen:45});
 let S=blank();
 try{
   const raw=localStorage.getItem(KEY);
@@ -643,7 +661,7 @@ const ES={
 "Balanced":"Equilibrado","A bit of everything":"Un poco de todo","Lift, push, carry":"Levanta, empuja, carga","Running":"Correr","Build your engine":"Construye tu motor","Mindset":"Mentalidad","Sharpen your head":"Afila tu mente","Full reset":"Reinicio total","Sleep, food, routine":"Sueño, comida, rutina",
 "My Routines":"Mis rutinas","Programs":"Programas","Start program":"Empezar programa","Start again":"Empezar de nuevo","Leave program":"Dejar programa","Tap to leave":"Toca para salir","Unlock with Pro":"Desbloquear con Pro","Exercise Progress":"Progreso por ejercicio","Save as routine":"Guardar como rutina",
 "Save a workout as a routine to start it again in one tap.":"Guarda un entreno como rutina para repetirlo con un toque.","Language":"Idioma","Appearance":"Apariencia","Dark":"Oscuro","Light":"Claro","Backup":"Respaldo","Download backup":"Descargar respaldo","Restore from backup":"Restaurar respaldo",
-"Get Pro":"Obtener Pro","How did you feel today?":"¿Cómo te sentiste hoy?","Rough":"Pésimo","Low":"Bajo","Okay":"Normal","Good":"Bien","Great":"Excelente","Last 14 days":"Últimos 14 días","Mood saved":"Estado guardado","Mood":"Estado de ánimo","Tap a face. You can change it any time today.":"Toca una cara. Puedes cambiarla cuando quieras hoy.","Program Library":"Biblioteca de programas","Search programs and challenges":"Busca programas y retos","Search programs":"Buscar programas","Challenges":"Retos","Free":"Gratis","Pro":"Pro","Active":"Activo","Details":"Detalles","Length":"Duración","Tasks a day":"Tareas al día","Completion bonus":"Bono al terminar","First week":"Primera semana","Final week":"Última semana","Start this program":"Empezar este programa","Start this challenge":"Empezar este reto","Starting replaces your current program.":"Empezar reemplaza tu programa actual.","Popular challenges":"Retos populares","Popular Challenges":"Retos populares","Challenge":"Reto","Start a program or challenge":"Empieza un programa o reto","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
+"Get Pro":"Obtener Pro","Workout Builder":"Generador de entrenos","Your equipment":"Tu equipo","Edit":"Editar","Save equipment":"Guardar equipo","Quick pick":"Selección rápida","No equipment":"Sin equipo","Home dumbbells":"Mancuernas en casa","Hotel gym":"Gym de hotel","Full gym":"Gym completo","Bodyweight moves are always included.":"Los ejercicios con tu peso siempre se incluyen.","Bodyweight only":"Solo tu peso","Dumbbells":"Mancuernas","Barbell":"Barra","Bench":"Banco","Kettlebell":"Pesa rusa","Pull-up bar":"Barra de dominadas","Cable":"Poleas","Machines":"Máquinas","Treadmill":"Caminadora","Bike":"Bicicleta","Rower":"Remo","Jump rope":"Cuerda para saltar","Box":"Cajón","Med ball":"Balón medicinal","Ab wheel":"Rueda abdominal","Battle ropes":"Cuerdas de batalla","Sled":"Trineo","Pool":"Piscina","Foam roller":"Rodillo de espuma","Goal":"Objetivo","Upper body":"Tren superior","Lower body":"Tren inferior","Push":"Empuje","Pull":"Jalón","Generate workout":"Generar entreno","Shuffle":"Mezclar","Swap":"Cambiar","Generated workout":"Entreno generado","No other options with your equipment":"No hay otras opciones con tu equipo","Pick your equipment, a goal and a length, and get a workout built around what you have.":"Elige tu equipo, un objetivo y una duración, y recibe un entreno hecho con lo que tienes.","How did you feel today?":"¿Cómo te sentiste hoy?","Rough":"Pésimo","Low":"Bajo","Okay":"Normal","Good":"Bien","Great":"Excelente","Last 14 days":"Últimos 14 días","Mood saved":"Estado guardado","Mood":"Estado de ánimo","Tap a face. You can change it any time today.":"Toca una cara. Puedes cambiarla cuando quieras hoy.","Program Library":"Biblioteca de programas","Search programs and challenges":"Busca programas y retos","Search programs":"Buscar programas","Challenges":"Retos","Free":"Gratis","Pro":"Pro","Active":"Activo","Details":"Detalles","Length":"Duración","Tasks a day":"Tareas al día","Completion bonus":"Bono al terminar","First week":"Primera semana","Final week":"Última semana","Start this program":"Empezar este programa","Start this challenge":"Empezar este reto","Starting replaces your current program.":"Empezar reemplaza tu programa actual.","Popular challenges":"Retos populares","Popular Challenges":"Retos populares","Challenge":"Reto","Start a program or challenge":"Empieza un programa o reto","Daily chest":"Cofre diario","Your chest is ready. Tap to open.":"Tu cofre está listo. Tócalo para abrir.","Opened:":"Abierto:",". Come back tomorrow.":". Vuelve mañana.","Weekly Quests":"Misiones semanales","Claimed":"Reclamada","Achievements":"Logros","Achievement unlocked":"Logro desbloqueado","Achievements unlocked":"Logros desbloqueados","Streak milestone":"Hito de racha","Bonus":"Bono","Quest complete":"Misión completa","Perfect Day":"Día perfecto","Common":"Común","Rare":"Raro","Legendary":"Legendario","Streak XP boost":"Bono de XP por racha","LEVEL UP!":"¡SUBISTE DE NIVEL!","RANK UP!":"¡NUEVO RANGO!","Level":"Nivel","Next level in":"Siguiente nivel en","Title unlocked":"Título desbloqueado","Loot":"Botín","All stats":"Todas las stats","New rank":"Nuevo rango","Level up":"Subiste de nivel","Claim your rank":"Reclama tu rango","Keep going":"Sigue así","Tap anywhere to close":"Toca para cerrar","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Dark mode":"Modo oscuro","Light mode":"Modo claro","Unlock":"Desbloquear","Have an unlock code?":"¿Tienes un código de desbloqueo?","Offline":"Sin conexión","Owluxe Pro":"Owluxe Pro","Owluxe Pro is active.":"Owluxe Pro está activo.","Thanks for supporting the brand.":"Gracias por apoyar la marca.",
 "All Pro programs, like 8-Week Strength and 5K in 6 Weeks":"Todos los programas Pro, como Fuerza en 8 semanas y 5K en 6 semanas","Unlimited saved routines":"Rutinas guardadas ilimitadas","Exercise progress charts":"Gráficas de progreso por ejercicio","PRO badge on your rank card":"Insignia PRO en tu tarjeta de rango","Checkout is coming soon.":"El pago estará disponible pronto.",
 "Pick an exercise you've logged to see your progress over time.":"Elige un ejercicio que hayas registrado para ver tu progreso.","Log an exercise in two or more workouts to see a trend.":"Registra un ejercicio en dos o más entrenos para ver la tendencia.","See your best set for every exercise over time.":"Mira tu mejor serie de cada ejercicio con el tiempo.",
 "Download a file of your progress, journal and photos. Restore it on a new phone to pick up where you left off.":"Descarga un archivo con tu progreso, diario y fotos. Restáuralo en otro celular para seguir donde quedaste.",
@@ -680,7 +698,7 @@ const ES_RX=[
  [/^Showing (\d+) of (\d+)\. Search to narrow it down\.$/,"Mostrando $1 de $2. Busca para filtrar."],[/^Show more \((\d+)\)$/,"Ver más ($1)"],[/^(\d+) moves$/,"$1 ejercicios"],
  [/^Reward unlocked: (.+)$/,(m,a)=>"Premio desbloqueado: "+tr(a)],[/^Hit your daily goal to unlock it \((\d+)\/(\d+)\)\.$/,"Cumple tu meta diaria para abrirlo ($1/$2)."],[/^Resets in (\d+) days?$/,(m,a)=>`Se reinicia en ${a} día${a==="1"?"":"s"}`],[/^Claim \+(\d+)$/,"Reclamar +$1"],
  [/^(\d+) of (\d+) unlocked$/,"$1 de $2 desbloqueados"],[/^Every task done · \+(\d+) XP$/,"Todas las tareas hechas · +$1 XP"],[/^Milestone bonus · \+(\d+) XP$/,"Bono de hito · +$1 XP"],[/^(\d+)-Day Streak$/,"Racha de $1 días"],[/^(\d+) achievements$/,"$1 logros"],
- [/^\+(\d+) XP · See them in Profile$/,"+$1 XP · Míralos en Perfil"],[/^Chest opened · (.+)$/,(m,a)=>"Cofre abierto · "+tr(a)],[/^Day (\d+)$/,"Día $1"],[/^You're in this (program|challenge) · Day (\d+) of (\d+)$/,(m,a,b,c)=>`Ya estás en este ${a==="program"?"programa":"reto"} · Día ${b} de ${c}`],[/^(\d+) plans$/,"$1 planes"],[/^No program matches “(.*)”\.$/,"Ningún programa coincide con “$1”."],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
+ [/^\+(\d+) XP · See them in Profile$/,"+$1 XP · Míralos en Perfil"],[/^Chest opened · (.+)$/,(m,a)=>"Cofre abierto · "+tr(a)],[/^Day (\d+)$/,"Día $1"],[/^You're in this (program|challenge) · Day (\d+) of (\d+)$/,(m,a,b,c)=>`Ya estás en este ${a==="program"?"programa":"reto"} · Día ${b} de ${c}`],[/^(\d+) plans$/,"$1 planes"],[/^No program matches “(.*)”\.$/,"Ningún programa coincide con “$1”."],[/^~(\d+) min · (\d+) exercises$/,"~$1 min · $2 ejercicios"],[/^Rest (.+) between sets$/,"Descanso de $1 entre series"],[/^No rest between moves$/,"Sin descanso entre ejercicios"],[/^Focus set to (.+)$/,(m,a)=>"Enfoque: "+tr(a)],[/^Level (\d+) reached$/,"Nivel $1 alcanzado"],[/^Started (.+)$/,"Empezaste $1"],
 ];
 function tr(s){if(LANG!=="es"||!s)return s;const k=s.trim();if(!k)return s;if(ES[k]!=null)return s.replace(k,ES[k]);for(const [r,f] of ES_RX){if(r.test(k))return s.replace(k,k.replace(r,f));}return s;}
 function trTree(root){if(LANG!=="es"||!root)return;if(root.nodeType===3){const v=root.nodeValue,n=tr(v);if(n!==v)root.nodeValue=n;return;}if(root.nodeType!==1)return;
@@ -770,7 +788,7 @@ function mergeState(a,b){
   m.food={};for(const src of [b.food||{},a.food||{}])for(const [d,list] of Object.entries(src)){const mp=new Map((m.food[d]||[]).map(x=>[x.id,x]));list.forEach(x=>mp.set(x.id,x));m.food[d]=[...mp.values()].sort((x,y)=>x.t-y.t);}
   m.calTarget=a.calTarget||b.calTarget||0;m.refBy=a.refBy||b.refBy||"";
   const ro=new Map();[...(b.routines||[]),...(a.routines||[])].forEach(r=>ro.set(r.id,r));m.routines=[...ro.values()];
-  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);m.ach=Object.assign({},b.ach,a.ach);m.milestones=Object.assign({},b.milestones,a.milestones);m.moods=Object.assign({},b.moods,a.moods);
+  m.program=a.program||b.program||null;m.progDone=Object.assign({},b.progDone,a.progDone);m.pro=!!(a.pro||b.pro);m.lang=a.lang||b.lang||"";m.theme=a.theme||b.theme||"dark";m.adminXP=a.adminXP!=null?a.adminXP:(b.adminXP||0);m.admin=!!(a.admin||b.admin);m.seenLevel=Math.max(a.seenLevel||0,b.seenLevel||0);m.ach=Object.assign({},b.ach,a.ach);m.milestones=Object.assign({},b.milestones,a.milestones);m.moods=Object.assign({},b.moods,a.moods);m.equipment=a.equipment||b.equipment||null;m.gen=a.gen||b.gen||null;m.genGoal=a.genGoal||b.genGoal||"full";m.genLen=a.genLen||b.genLen||45;
   return m;
 }
 async function boot(){
@@ -1061,11 +1079,12 @@ function viewTrain(){
       <div class="pills scroll" role="group" aria-label="Workout type">${WORKOUT_TYPES.map(t=>`<button class="pill" data-wtype="${t}" aria-pressed="${pendingType===t}">${t}</button>`).join("")}</div>
       <button class="btn" id="wo-start">Start ${esc(pendingType)} workout</button>
       <p class="small muted">The clock runs while you train. Earn ${WORKOUT_XP.perMinute} XP per minute and ${WORKOUT_XP.perSet} XP per set, up to ${WORKOUT_XP.maxPerWorkout} per workout. A finished workout also counts toward your daily streak.</p></div></section>
+    ${builderSection()}
     ${routinesSection()}
     ${programsSection()}
-    ${library(4)}
+    ${library(5)}
     ${exProgressSection()}
-    <section class="sec">${head(6,"History",`<span class="label">${wkList.length} this week</span>`)}<div class="card">
+    <section class="sec">${head(7,"History",`<span class="label">${wkList.length} this week</span>`)}<div class="card">
       ${hist.length?hist.slice(0,12).map(w=>`<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(w.name||w.type)}</b> <span class="small muted">${fmt(w.date,{weekday:"short",month:"short",day:"numeric"})}</span></span><span class="xp">+${w.xp} XP</span></div>
         <p class="small muted">${w.type} · ${clock(w.dur)} · ${w.sets} sets${w.reps?` · ${w.reps} reps`:""}${w.vol?` · ${Math.round(toU(w.vol)).toLocaleString()} ${S.unit} lifted`:""}</p>
         <p class="small muted">${w.ex.map(x=>esc(x.n)).join(", ")}</p><button class="btn ghost sm" data-rsave="${esc(w.id)}" style="align-self:flex-start">Save as routine</button></div>`).join(""):`<p class="empty">No workouts yet. Start one above, or pick a move from the library.</p>`}</div></section>`;
@@ -1313,9 +1332,81 @@ function proCard(){
     ${proMsg?`<p class="small" style="color:var(--warn)">${esc(proMsg)}</p>`:""}`;
 }
 
+/* ---------- workout builder ---------- */
+const GEN_GOALS={full:{n:"Full body",type:"Strength",rest:90,slots:["Legs","Chest","Back","Legs","Shoulders","Core","Arms"]},
+  upper:{n:"Upper body",type:"Strength",rest:90,slots:["Chest","Back","Shoulders","Chest","Back","Arms:push","Arms:pull"]},
+  lower:{n:"Lower body",type:"Strength",rest:90,slots:["Legs","Legs","Legs","Core","Legs","Legs","Core"]},
+  push:{n:"Push",type:"Strength",rest:90,slots:["Chest","Shoulders","Chest","Arms:push","Shoulders","Chest","Arms:push"]},
+  pull:{n:"Pull",type:"Strength",rest:90,slots:["Back","Back","Arms:pull","Back","Back","Arms:pull","Core"]},
+  core:{n:"Core",type:"Strength",rest:60,slots:["Core","Core","Core","Core","Core","Core","Core"]},
+  hiit:{n:"HIIT",type:"HIIT",rest:30,slots:["Cardio","Full body","Legs","Core","Full body","Cardio","Core"]},
+  mobility:{n:"Mobility",type:"Mobility",rest:0,slots:["Mobility","Mobility","Mobility","Mobility","Mobility","Mobility","Mobility"]}};
+const EQ_MAP={Dumbbells:"Dumbbells",Barbell:"Barbell",Kettlebell:"Kettlebell",Cable:"Cable",Machine:"Machines",Treadmill:"Treadmill",Bike:"Bike",Rower:"Rower",Rope:"Jump rope",Box:"Box","Med ball":"Med ball","Ab wheel":"Ab wheel",Ropes:"Battle ropes",Sled:"Sled",Pool:"Pool","Foam roller":"Foam roller"};
+function exNeeds(e){const need=[];if(EQ_MAP[e.eq])need.push(EQ_MAP[e.eq]);
+  if(/^(Pull-up|Chin-up|Hanging leg raise)$/.test(e.n))need.push("Pull-up bar");
+  if(/^Dips$/.test(e.n))need.push("Machines");
+  if(/bench press|Incline dumbbell|Dumbbell fly|Skull crusher|Hip thrust/i.test(e.n))need.push("Bench");return need;}
+const haveEq=()=>new Set(S.equipment||[]);
+const canDo=e=>{const h=haveEq();return exNeeds(e).every(x=>h.has(x));};
+const COMPOUND=/squat|deadlift|bench press|row|pull-up|chin-up|overhead press|shoulder press|lunge|thrust|clean|leg press|dips/i;
+function slotPool(slot,goal){const [g,sub]=slot.split(":");let pool=allEx().filter(e=>e.g===g&&canDo(e));
+  if(sub==="push")pool=pool.filter(e=>/tricep|skull|close-grip|diamond|bench dip|extension|pushdown/i.test(e.n));
+  if(sub==="pull")pool=pool.filter(e=>/curl/i.test(e.n));
+  if(["full","upper","lower","push","pull"].includes(goal)){const st=pool.filter(e=>e.k==="weighted"||e.k==="reps");if(st.length)pool=st;}
+  if(goal==="hiit"&&g!=="Cardio"){const lt=pool.filter(e=>e.eq!=="Barbell"&&e.eq!=="Machine");if(lt.length)pool=lt;}
+  if(!pool.length&&g!=="Mobility"&&g!=="Cardio")pool=allEx().filter(e=>(e.g==="Full body"||e.g===g)&&canDo(e));
+  return pool;}
+function pickFrom(pool,used,r,first){const c=pool.filter(e=>!used.has(e.n));if(!c.length)return null;
+  return c.map(e=>({e,sc:r()+(first&&COMPOUND.test(e.n)?0.6:0)+(e.k==="weighted"?0.15:0)})).sort((a,b)=>b.sc-a.sc)[0].e;}
+function lastWeight(n){const ws=(S.workouts||[]).slice().sort((a,b)=>b.d-a.d);for(const w of ws){const x=w.ex.find(z=>z.n===n);if(x){const m=Math.max(0,...x.sets.map(st=>st.w||0));if(m)return m;}}return null;}
+function prescribe(e,i,goal,len){const w=lastWeight(e.n),mk=(n,f)=>Array.from({length:n},()=>f());
+  if(goal==="mobility")return e.k==="reps"?mk(2,()=>({r:10})):mk(2,()=>({s:60}));
+  if(e.k==="cardio")return [{m:goal==="hiit"?(len>=45?10:6):(len>=45?12:8),dist:null}];
+  if(goal==="hiit")return e.k==="time"?mk(3,()=>({s:40})):e.k==="weighted"?mk(3,()=>({r:12,w})):mk(3,()=>({r:15}));
+  if(goal==="core")return e.k==="time"?mk(3,()=>({s:40})):e.k==="weighted"?mk(3,()=>({r:12,w})):mk(3,()=>({r:15}));
+  const extra=len>=60&&i<3?1:0;
+  if(e.k==="weighted")return i===0?mk(4+extra,()=>({r:8,w})):i<4?mk(3+extra,()=>({r:10,w})):mk(3,()=>({r:12,w}));
+  if(e.k==="reps")return mk(3+extra,()=>({r:/pull-up|chin-up|dips/i.test(e.n)?8:12}));
+  return mk(3,()=>({s:45}));}
+function genMinutes(items,rest){let t=0;for(const x of items)for(const st of x.sets)t+=x.k==="cardio"?(st.m||0):x.k==="time"?(st.s+rest)/60:(x.k==="weighted"?50:40)/60+rest/60;return Math.max(5,Math.round(t+4));}
+function generate(seed){const goal=S.genGoal||"full",len=S.genLen||45,G=GEN_GOALS[goal],n={20:4,30:5,45:6,60:7}[len]||6;
+  const r=rng("gen"+seed),used=new Set(),items=[];
+  for(let i=0;i<n;i++){const slot=G.slots[i%G.slots.length],e=pickFrom(slotPool(slot,goal),used,r,i<2);if(!e)continue;used.add(e.n);items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot,sets:prescribe(e,items.length,goal,len)});}
+  if(goal!=="hiit"&&goal!=="mobility"&&goal!=="core"&&len>=30){const cp=allEx().filter(e=>e.g==="Cardio"&&e.k==="cardio"&&canDo(e)&&exNeeds(e).length);if(cp.length&&items.length){const e=cp[Math.floor(r()*cp.length)];items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot:"finisher",sets:[{m:len>=45?10:6,dist:null}]});}}
+  S.gen={goal,len,seed,items,rest:G.rest};save();track("gen-"+goal);}
+function swapGen(i){const it=S.gen&&S.gen.items[i];if(!it)return;const used=new Set(S.gen.items.map(x=>x.n));
+  const pool=it.slot==="finisher"?allEx().filter(e=>e.g==="Cardio"&&e.k==="cardio"&&canDo(e)&&exNeeds(e).length):slotPool(it.slot,S.gen.goal);
+  const e=pickFrom(pool,used,Math.random,false);if(!e){toast(LANG==="es"?"No hay otras opciones con tu equipo":"No other options with your equipment");return;}
+  S.gen.items[i]={n:e.n,k:e.k,g:e.g,eq:e.eq,slot:it.slot,sets:it.slot==="finisher"?it.sets:prescribe(e,i,S.gen.goal,S.gen.len)};save();render();}
+const presc=x=>{const st=x.sets[0]||{},n=x.sets.length;return x.k==="cardio"?`${st.m} min`:x.k==="time"?`${n} × ${st.s} s`:`${n} × ${st.r}`;};
+let eqEditing=false;
+function builderSection(){
+  const eq=S.equipment,editing=eqEditing||!eq,swapIc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>';
+  const eqBlock=editing?`<div><span class="label">Quick pick</span><div class="pills scroll" style="margin-top:6px">${Object.keys(EQUIP_PRESETS).map(k=>`<button class="pill" data-eqp="${esc(k)}">${esc(k)}</button>`).join("")}</div></div>
+      <div class="pills" role="group" aria-label="Your equipment">${EQUIPMENT.map(x=>`<button class="pill" data-eq="${esc(x)}" aria-pressed="${!!(eq||[]).includes(x)}">${esc(x)}</button>`).join("")}</div>
+      <p class="small muted">Bodyweight moves are always included.</p>
+      <button class="btn ghost sm" id="eq-save" style="align-self:flex-start">Save equipment</button>`
+    :`<div class="eq-sum"><p class="small">${eq.length?eq.map(esc).join(" · "):"Bodyweight only"}</p><button class="btn ghost sm" id="eq-edit">Edit</button></div>`;
+  const g=S.gen,G=g&&GEN_GOALS[g.goal];
+  return `<section class="sec">${head(2,"Workout Builder")}<div class="card">
+    <p class="small muted">Pick your equipment, a goal and a length, and get a workout built around what you have.</p>
+    <span class="label">Your equipment</span>${eqBlock}
+    <span class="label">Goal</span><div class="pills scroll" role="group" aria-label="Goal">${Object.entries(GEN_GOALS).map(([k,v])=>`<button class="pill" data-ggoal="${k}" aria-pressed="${(S.genGoal||"full")===k}">${v.n}</button>`).join("")}</div>
+    <span class="label">Length</span><div class="seg four" role="group" aria-label="Length">${GEN_LENGTHS.map(m=>`<button data-glen="${m}" aria-pressed="${(S.genLen||45)===m}">${m} min</button>`).join("")}</div>
+    <button class="btn" id="gen-go">Generate workout</button>
+    ${g&&g.items.length?`<div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px">
+      <div class="spread"><span class="label">Generated workout · ${esc(G.n)}</span><span class="small muted">~${genMinutes(g.items,g.rest)} min · ${g.items.length} exercises</span></div>
+      <div>${g.items.map((x,i)=>`<div class="gen-row"><span class="lb-pos">${i+1}</span><span style="min-width:0"><span class="gn" style="display:block">${esc(x.n)}</span><span class="small muted">${esc(x.g)}${x.eq&&x.eq!=="Bodyweight"&&x.eq!=="None"?" · "+esc(x.eq):""}</span></span><span class="gs">${presc(x)}</span><button class="iconbtn" data-gswap="${i}" aria-label="Swap ${esc(x.n)}" title="Swap">${swapIc}</button></div>`).join("")}</div>
+      <p class="small muted">${g.rest?`Rest ${clock(g.rest)} between sets`:"No rest between moves"}</p>
+      <div class="row"><button class="btn" id="gen-start">Start workout</button><button class="btn ghost" id="gen-shuffle">Shuffle</button><button class="btn ghost" id="gen-save">Save as routine</button></div></div>`:""}
+  </div></section>`;}
+function startGenerated(){const g=S.gen;if(!g||!g.items.length)return;if(S.active){toast(LANG==="es"?"Termina o descarta tu entreno actual primero":"Finish or discard your current workout first");return;}
+  const G=GEN_GOALS[g.goal];S.active={id:"w"+Date.now().toString(36),start:Date.now(),type:G.type,name:`${G.n} · ${g.len} min`,rest:g.rest,ex:g.items.map(x=>({n:x.n,k:x.k,g:x.g,sets:x.sets.map(st=>({...st,done:false}))}))};
+  lastSummary=null;exPick=false;discardArmed=false;save();requestWake();beep(660,80);track("gen-start");render();scrollTo(0,0);}
+
 /* ---------- routines ---------- */
 function routinesSection(){const rs=S.routines||[];
-  return `<section class="sec">${head(2,"My Routines")}<div class="card">${rs.length?rs.map(r=>`<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(r.name)}</b> <span class="small muted">${esc(r.type)} · ${r.ex.length} exercises</span></span><span class="row" style="flex-wrap:nowrap"><button class="btn sm" data-rstart="${esc(r.id)}">Start</button><button class="btn ghost sm" data-rdel="${esc(r.id)}">${rDelArmed===r.id?"Confirm":"Delete"}</button></span></div><p class="small muted">${r.ex.map(x=>esc(x.n)).join(", ")}</p></div>`).join(""):`<p class="empty">Save a workout as a routine to start it again in one tap.</p>`}
+  return `<section class="sec">${head(3,"My Routines")}<div class="card">${rs.length?rs.map(r=>`<div class="entry"><div class="spread"><span style="min-width:0"><b style="font-weight:500">${esc(r.name)}</b> <span class="small muted">${esc(r.type)} · ${r.ex.length} exercises</span></span><span class="row" style="flex-wrap:nowrap"><button class="btn sm" data-rstart="${esc(r.id)}">Start</button><button class="btn ghost sm" data-rdel="${esc(r.id)}">${rDelArmed===r.id?"Confirm":"Delete"}</button></span></div><p class="small muted">${r.ex.map(x=>esc(x.n)).join(", ")}</p></div>`).join(""):`<p class="empty">Save a workout as a routine to start it again in one tap.</p>`}
     ${!isPro()?`<p class="small muted">Free plan: ${Math.min(rs.length,FREE_ROUTINES)} of ${FREE_ROUTINES} routines. Pro removes the limit.</p>`:""}</div></section>`;}
 function saveRoutine(name,type,ex){const rs=S.routines=S.routines||[];
   if(!ex.length){toast(LANG==="es"?"Agrega un ejercicio primero":"Add an exercise first");return false;}
@@ -1366,7 +1457,7 @@ function plResults(){const list=plList(),cur=curProg();if(!list.length)return `<
   return list.slice(0,plShow).map(p=>`<button class="plib-row" data-pinfo="${p.id}"><span class="plib-n">${esc(pn(p))}${p.premium?' <span class="tag">Pro</span>':""}${cur&&cur.id===p.id?' <span class="tag">Active</span>':""}${S.progDone&&S.progDone[p.id]?' <span class="tag">Done</span>':""}</span><span class="plib-m">${p.days} days</span>${chev}</button>`).join("")
     +(list.length>plShow?`<button class="btn ghost sm" id="pl-more" style="align-self:flex-start;margin-top:8px">Show more (${list.length-plShow})</button>`:"");}
 function programsSection(){const cur=curProg();
-  return `<section class="sec">${head(3,"Program Library",`<span class="label">${PROGRAMS.length} plans</span>`)}<div class="card">
+  return `<section class="sec">${head(4,"Program Library",`<span class="label">${PROGRAMS.length} plans</span>`)}<div class="card">
     ${cur?`<div class="plib-on"><div class="spread"><span style="min-width:0"><span class="label">Active</span><br><b style="font-weight:500">${esc(pn(cur))}</b></span><span class="small" style="color:var(--gold-2)">Day ${progDay()} of ${cur.days}</span></div>
       <div class="progress" style="margin-top:8px"><i style="width:${progDay()/cur.days*100}%"></i></div>
       <div class="row" style="margin-top:8px"><button class="btn ghost sm" data-pinfo="${cur.id}">Details</button><button class="btn ghost sm" data-pleave="1">${leaveArmed?"Tap to leave":"Leave program"}</button></div></div>`:""}
@@ -1397,7 +1488,7 @@ function exProgressSection(){
       if(v>0)pts.push({x:w.d,y:Math.round(v*10)/10});}
     unit=k==="weighted"?S.unit:k==="reps"?"reps":k==="time"?"sec":distU();
     body=`<select id="prog-ex" aria-label="Exercise">${names.map(x=>`<option ${x===n?"selected":""}>${esc(x)}</option>`).join("")}</select>${lineChart(pts,unit)}`;}
-  return `<section class="sec">${head(5,"Exercise Progress",isPro()?"":'<span class="tag">Pro</span>')}<div class="card">${body}</div></section>`;}
+  return `<section class="sec">${head(6,"Exercise Progress",isPro()?"":'<span class="tag">Pro</span>')}<div class="card">${body}</div></section>`;}
 
 /* ---------- backup ---------- */
 async function exportBackup(){const data={app:"owluxe",v:2,exported:new Date().toISOString(),state:S,photos:photos||localPhotos||[]},js=JSON.stringify(data),name=`owluxe-backup-${TODAY}.json`;
@@ -1751,7 +1842,17 @@ document.addEventListener("click",async e=>{
   const plf=e.target.closest("[data-plf]");if(plf){plF=plf.dataset.plf;plShow=6;document.querySelectorAll("[data-plf]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.plf===plF)));const r=$("#pl-results");if(r)r.innerHTML=plResults();return;}
   if(e.target.id==="pl-more"){plShow+=10;const r=$("#pl-results");if(r)r.innerHTML=plResults();return;}
   const md=e.target.closest("[data-mood]");if(md){const v=+md.dataset.mood;S.moods=S.moods||{};S.moods[TODAY]={v,t:Date.now()};save();track("mood");toast("Mood saved");render();return;}
+  const eqb=e.target.closest("[data-eq]");if(eqb){const x=eqb.dataset.eq,cur=new Set(S.equipment||[]);cur.has(x)?cur.delete(x):cur.add(x);S.equipment=EQUIPMENT.filter(z=>cur.has(z));eqEditing=true;save();eqb.setAttribute("aria-pressed",String(cur.has(x)));return;}
+  const eqp=e.target.closest("[data-eqp]");if(eqp){S.equipment=(EQUIP_PRESETS[eqp.dataset.eqp]||[]).slice();eqEditing=true;save();render();return;}
+  const gg=e.target.closest("[data-ggoal]");if(gg){S.genGoal=gg.dataset.ggoal;save();render();return;}
+  const gl=e.target.closest("[data-glen]");if(gl){S.genLen=+gl.dataset.glen;save();render();return;}
+  const gsw=e.target.closest("[data-gswap]");if(gsw){swapGen(+gsw.dataset.gswap);return;}
   const id=e.target.id;
+  if(id==="eq-edit"){eqEditing=true;render();return;}
+  if(id==="eq-save"){S.equipment=S.equipment||[];eqEditing=false;save();render();return;}
+  if(id==="gen-go"||id==="gen-shuffle"){if(!S.equipment)S.equipment=[];eqEditing=false;generate(Date.now());render();if(id==="gen-go"){const h=[...document.querySelectorAll("h2")].find(x=>/^(Workout Builder|Generador de entrenos)$/.test(x.textContent));if(h)h.scrollIntoView({block:"start"});}return;}
+  if(id==="gen-start"){startGenerated();return;}
+  if(id==="gen-save"&&S.gen){const G=GEN_GOALS[S.gen.goal];if(saveRoutine(`${G.n} · ${S.gen.len} min`,G.type,S.gen.items))render();return;}
   if(id==="adm-unlock"){const ok=await adminUnlock($("#adm-in")?.value);adminMsg=ok?"":"Wrong passcode.";if(ok)toast("Admin mode on");render();return;}
   if(id==="adm-close"){adminPrompt=false;adminMsg="";render();return;}
   if(id==="adm-prev-lv"&&adminOn()){const lv=levelOf(totalXP());celebrate(lv,lv+1,false);return;}

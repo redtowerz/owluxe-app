@@ -1353,11 +1353,11 @@ function slotPool(slot,goal){const [g,sub]=slot.split(":");let pool=allEx().filt
   if(sub==="push")pool=pool.filter(e=>/tricep|skull|close-grip|diamond|bench dip|extension|pushdown/i.test(e.n));
   if(sub==="pull")pool=pool.filter(e=>/curl/i.test(e.n));
   if(["full","upper","lower","push","pull"].includes(goal)){const st=pool.filter(e=>e.k==="weighted"||e.k==="reps");if(st.length)pool=st;}
-  if(goal==="hiit"&&g!=="Cardio"){const lt=pool.filter(e=>e.eq!=="Barbell"&&e.eq!=="Machine");if(lt.length)pool=lt;}
+  if(goal==="hiit"&&g!=="Cardio"){const lt=pool.filter(e=>e.eq!=="Barbell"&&e.eq!=="Machine"&&!/Turkish|Farmer|carry/i.test(e.n));if(lt.length)pool=lt;}
   if(!pool.length&&g!=="Mobility"&&g!=="Cardio")pool=allEx().filter(e=>(e.g==="Full body"||e.g===g)&&canDo(e));
   return pool;}
 function pickFrom(pool,used,r,first){const c=pool.filter(e=>!used.has(e.n));if(!c.length)return null;
-  return c.map(e=>({e,sc:r()+(first&&COMPOUND.test(e.n)?0.6:0)+(e.k==="weighted"?0.15:0)})).sort((a,b)=>b.sc-a.sc)[0].e;}
+  return c.map(e=>({e,sc:r()+(first&&COMPOUND.test(e.n)?0.6:0)+(first&&e.eq==="Barbell"?0.35:0)+(e.k==="weighted"?0.15:0)})).sort((a,b)=>b.sc-a.sc)[0].e;}
 function lastWeight(n){const ws=(S.workouts||[]).slice().sort((a,b)=>b.d-a.d);for(const w of ws){const x=w.ex.find(z=>z.n===n);if(x){const m=Math.max(0,...x.sets.map(st=>st.w||0));if(m)return m;}}return null;}
 function prescribe(e,i,goal,len){const w=lastWeight(e.n),mk=(n,f)=>Array.from({length:n},()=>f());
   if(goal==="mobility")return e.k==="reps"?mk(2,()=>({r:10})):mk(2,()=>({s:60}));

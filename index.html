@@ -1356,24 +1356,25 @@ function slotPool(slot,goal){const [g,sub]=slot.split(":");let pool=allEx().filt
   if(goal==="hiit"&&g!=="Cardio"){const lt=pool.filter(e=>e.eq!=="Barbell"&&e.eq!=="Machine"&&!/Turkish|Farmer|carry/i.test(e.n));if(lt.length)pool=lt;}
   if(!pool.length&&g!=="Mobility"&&g!=="Cardio")pool=allEx().filter(e=>(e.g==="Full body"||e.g===g)&&canDo(e));
   return pool;}
+const ISOLATION=/calf|face pull|rear delt|front raise|wall sit|back extension|upright row|preacher|leg extension|leg curl/i;
 function pickFrom(pool,used,r,first){const c=pool.filter(e=>!used.has(e.n));if(!c.length)return null;
-  return c.map(e=>({e,sc:r()+(first&&COMPOUND.test(e.n)?0.6:0)+(first&&e.eq==="Barbell"?0.35:0)+(e.k==="weighted"?0.15:0)})).sort((a,b)=>b.sc-a.sc)[0].e;}
+  return c.map(e=>({e,sc:r()+(first&&COMPOUND.test(e.n)?0.7:0)+(first&&e.eq==="Barbell"?0.35:0)+(e.k==="weighted"?0.15:0)-(first&&ISOLATION.test(e.n)?0.6:0)})).sort((a,b)=>b.sc-a.sc)[0].e;}
 function lastWeight(n){const ws=(S.workouts||[]).slice().sort((a,b)=>b.d-a.d);for(const w of ws){const x=w.ex.find(z=>z.n===n);if(x){const m=Math.max(0,...x.sets.map(st=>st.w||0));if(m)return m;}}return null;}
 function prescribe(e,i,goal,len){const w=lastWeight(e.n),mk=(n,f)=>Array.from({length:n},()=>f());
   if(goal==="mobility")return e.k==="reps"?mk(2,()=>({r:10})):mk(2,()=>({s:60}));
   if(e.k==="cardio")return [{m:goal==="hiit"?(len>=45?10:6):(len>=45?12:8),dist:null}];
   if(goal==="hiit")return e.k==="time"?mk(3,()=>({s:40})):e.k==="weighted"?mk(3,()=>({r:12,w})):mk(3,()=>({r:15}));
   if(goal==="core")return e.k==="time"?mk(3,()=>({s:40})):e.k==="weighted"?mk(3,()=>({r:12,w})):mk(3,()=>({r:15}));
-  const extra=len>=60&&i<3?1:0;
+  const extra=0;
   if(e.k==="weighted")return i===0?mk(4+extra,()=>({r:8,w})):i<4?mk(3+extra,()=>({r:10,w})):mk(3,()=>({r:12,w}));
   if(e.k==="reps")return mk(3+extra,()=>({r:/pull-up|chin-up|dips/i.test(e.n)?8:12}));
   return mk(3,()=>({s:45}));}
 function genMinutes(items,rest){let t=0;for(const x of items)for(const st of x.sets)t+=x.k==="cardio"?(st.m||0):x.k==="time"?(st.s+rest)/60:(x.k==="weighted"?50:40)/60+rest/60;return Math.max(5,Math.round(t+4));}
-function generate(seed){const goal=S.genGoal||"full",len=S.genLen||45,G=GEN_GOALS[goal],n={20:4,30:5,45:6,60:7}[len]||6;
+function generate(seed){const goal=S.genGoal||"full",len=S.genLen||45,G=GEN_GOALS[goal],n={20:3,30:4,45:5,60:6}[len]||5,strength=["full","upper","lower","push","pull"].includes(goal),seen=new Set();
   const r=rng("gen"+seed),used=new Set(),items=[];
-  for(let i=0;i<n;i++){const slot=G.slots[i%G.slots.length],e=pickFrom(slotPool(slot,goal),used,r,i<2);if(!e)continue;used.add(e.n);items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot,sets:prescribe(e,items.length,goal,len)});}
-  if(goal!=="hiit"&&goal!=="mobility"&&goal!=="core"&&len>=30){const cp=allEx().filter(e=>e.g==="Cardio"&&e.k==="cardio"&&canDo(e)&&exNeeds(e).length);if(cp.length&&items.length){const e=cp[Math.floor(r()*cp.length)];items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot:"finisher",sets:[{m:len>=45?10:6,dist:null}]});}}
-  S.gen={goal,len,seed,items,rest:G.rest};save();track("gen-"+goal);}
+  for(let i=0;i<n;i++){const slot=G.slots[i%G.slots.length],grp=slot.split(":")[0],e=pickFrom(slotPool(slot,goal),used,r,strength?!seen.has(grp):i<2);seen.add(grp);if(!e)continue;used.add(e.n);items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot,sets:prescribe(e,items.length,goal,len)});}
+  if(goal!=="hiit"&&goal!=="mobility"&&goal!=="core"&&len>=45){const cp=allEx().filter(e=>e.g==="Cardio"&&e.k==="cardio"&&canDo(e)&&exNeeds(e).length);if(cp.length&&items.length){const e=cp[Math.floor(r()*cp.length)];items.push({n:e.n,k:e.k,g:e.g,eq:e.eq,slot:"finisher",sets:[{m:len>=45?10:6,dist:null}]});}}
+  S.gen={goal,len,seed,items,rest:strength&&len<=20?60:G.rest};save();track("gen-"+goal);}
 function swapGen(i){const it=S.gen&&S.gen.items[i];if(!it)return;const used=new Set(S.gen.items.map(x=>x.n));
   const pool=it.slot==="finisher"?allEx().filter(e=>e.g==="Cardio"&&e.k==="cardio"&&canDo(e)&&exNeeds(e).length):slotPool(it.slot,S.gen.goal);
   const e=pickFrom(pool,used,Math.random,false);if(!e){toast(LANG==="es"?"No hay otras opciones con tu equipo":"No other options with your equipment");return;}
@@ -1386,7 +1387,7 @@ function builderSection(){
       <div class="pills" role="group" aria-label="Your equipment">${EQUIPMENT.map(x=>`<button class="pill" data-eq="${esc(x)}" aria-pressed="${!!(eq||[]).includes(x)}">${esc(x)}</button>`).join("")}</div>
       <p class="small muted">Bodyweight moves are always included.</p>
       <button class="btn ghost sm" id="eq-save" style="align-self:flex-start">Save equipment</button>`
-    :`<div class="eq-sum"><p class="small">${eq.length?eq.map(esc).join(" · "):"Bodyweight only"}</p><button class="btn ghost sm" id="eq-edit">Edit</button></div>`;
+    :`<div class="eq-sum"><p class="small">${!eq.length?"Bodyweight only":eq.length>5?`${eq.slice(0,4).map(esc).join(" · ")} +${eq.length-4}`:eq.map(esc).join(" · ")}</p><button class="btn ghost sm" id="eq-edit">Edit</button></div>`;
   const g=S.gen,G=g&&GEN_GOALS[g.goal];
   return `<section class="sec">${head(2,"Workout Builder")}<div class="card">
     <p class="small muted">Pick your equipment, a goal and a length, and get a workout built around what you have.</p>
@@ -1395,7 +1396,7 @@ function builderSection(){
     <span class="label">Length</span><div class="seg four" role="group" aria-label="Length">${GEN_LENGTHS.map(m=>`<button data-glen="${m}" aria-pressed="${(S.genLen||45)===m}">${m} min</button>`).join("")}</div>
     <button class="btn" id="gen-go">Generate workout</button>
     ${g&&g.items.length?`<div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px">
-      <div class="spread"><span class="label">Generated workout · ${esc(G.n)}</span><span class="small muted">~${genMinutes(g.items,g.rest)} min · ${g.items.length} exercises</span></div>
+      <div class="spread"><span class="label">Generated workout</span><span class="small muted" style="white-space:nowrap">~${genMinutes(g.items,g.rest)} min · ${g.items.length} exercises</span></div>
       <div>${g.items.map((x,i)=>`<div class="gen-row"><span class="lb-pos">${i+1}</span><span style="min-width:0"><span class="gn" style="display:block">${esc(x.n)}</span><span class="small muted">${esc(x.g)}${x.eq&&x.eq!=="Bodyweight"&&x.eq!=="None"?" · "+esc(x.eq):""}</span></span><span class="gs">${presc(x)}</span><button class="iconbtn" data-gswap="${i}" aria-label="Swap ${esc(x.n)}" title="Swap">${swapIc}</button></div>`).join("")}</div>
       <p class="small muted">${g.rest?`Rest ${clock(g.rest)} between sets`:"No rest between moves"}</p>
       <div class="row"><button class="btn" id="gen-start">Start workout</button><button class="btn ghost" id="gen-shuffle">Shuffle</button><button class="btn ghost" id="gen-save">Save as routine</button></div></div>`:""}
